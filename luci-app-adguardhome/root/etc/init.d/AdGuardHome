@@ -354,6 +354,43 @@ _add_upprotect_file()
 	local expanded_file=$(eval echo "$file")
 	echo "$expanded_file" >> /lib/upgrade/keep.d/luci-app-adguardhome
 }
+
+get_dns_config_value()
+{
+	local key="$1"
+	local file="$2"
+	[ -f "$file" ] || return
+	awk -v key="$key" '
+		$0 ~ /^dns:/ { in_dns=1; next }
+		in_dns && $0 ~ /^[^[:space:]]/ { in_dns=0 }
+		in_dns && $1 == key ":" {
+			sub(/^[^:]+:[[:space:]]*/, "")
+			gsub(/^"|"$/, "")
+			print
+			exit
+		}
+	' "$file"
+}
+
+ensure_ipset_file_sets()
+{
+	local configpath="$1"
+	local ipset_file setname
+	command -v ipset >/dev/null 2>&1 || return
+	ipset_file="$(get_dns_config_value ipset_file "$configpath")"
+	[ -n "$ipset_file" ] && [ -f "$ipset_file" ] || return
+	awk -F/ '
+		NF >= 4 && $2 != "" && $3 != "" {
+			print $3
+		}
+	' "$ipset_file" | sort -u | while IFS= read -r setname; do
+		case "$setname" in
+			*[!A-Za-z0-9_.-]*|"") continue ;;
+		esac
+		ipset list "$setname" >/dev/null 2>&1 || ipset create "$setname" hash:ip 2>/dev/null
+	done
+}
+
 start_service() {
 	# Reading config
 	rm /var/run/AdGserverdis >/dev/null 2>&1
@@ -365,7 +402,6 @@ start_service() {
 		config_editor "users.password" "$hashpass" "$configpath"
 		uci set $CONFIGURATION.$CONFIGURATION.hashpass=""
 	fi
-	local ipst=0
 	config_get_bool enabled $CONFIGURATION enabled 0
 	# update crontab
 	do_crontab
@@ -376,10 +412,7 @@ start_service() {
 	fi
 	#what need to do before reload
 	config_get workdir $CONFIGURATION workdir "/etc/AdGuardHome"
-	grep -q "ipset.txt" $configpath 2>/dev/null && ipst=1
-	if [ $ipst -eq 1 ];then
-		ipset list $GFWSET >/dev/null 2>&1 || ipset create $GFWSET hash:ip 2>/dev/null
-	fi
+	ensure_ipset_file_sets "$configpath"
 	config_get backupfile $CONFIGURATION backupfile ""
 	mkdir -p $workdir/data
 	if [ -n "$backupfile" ] && [ ! -d "$workdir/data" ]; then
