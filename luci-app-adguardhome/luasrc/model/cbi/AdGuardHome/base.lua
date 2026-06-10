@@ -255,6 +255,7 @@ o = s:taboption("other",MultiValue, "crontab", translate("Crontab task"),transla
 o:value("autohost",translate("Auto update ipv6 hosts and restart AdGuardHome"))
 o:value("autogfw",translate("Auto update gfwlist and restart AdGuardHome"))
 o:value("autogfwipset",translate("Auto update ipset list and restart AdGuardHome"))
+o:value("autoupstreamdns",translate("Auto update upstream_dns_file and restart AdGuardHome"))
 o.widget = "checkbox"
 o.default = nil
 o.optional = false
@@ -315,6 +316,62 @@ o = s:taboption("other", Button, "custom_ipset_del", translate("Delete custom ip
 o.inputtitle = translate("Del")
 o.write=function()
 	luci.sys.exec("sh /usr/share/AdGuardHome/custom_ipset2adg.sh del >/tmp/AdGuardHome_custom_ipset.log 2>&1")
+	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
+end
+
+---- Upstream DNS File Settings ----
+o = s:taboption("other", Flag, "upstream_dns_file_enable", translate("Enable upstream_dns_file"), translate("Download Loyalsoldier domain lists and generate AdGuardHome dns.upstream_dns_file for DNS split routing"))
+o.default = 0
+o.optional = true
+
+o = s:taboption("other", Value, "upstream_dns_cn_upstream", translate("CN upstream DNS"), translate("Upstream DNS for China direct domains (space-separated, e.g. https://223.5.5.5/dns-query https://1.12.12.12/dns-query)"))
+o.default = "https://223.5.5.5/dns-query https://1.12.12.12/dns-query"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("other", Value, "upstream_dns_default_upstreams", translate("Default upstream DNS"), translate("Default fallback upstream DNS for non-China domains (space-separated, e.g. https://dns.cloudflare.com/dns-query https://dns.google/dns-query)"))
+o.default = "https://dns.cloudflare.com/dns-query https://dns.google/dns-query"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("other", Value, "upstream_dns_base_url_github", translate("GitHub source URL"), translate("Base URL for downloading domain lists from GitHub"))
+o.default = "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("other", Value, "upstream_dns_base_url_cdn", translate("CDN source URL"), translate("Fallback CDN base URL if GitHub download fails"))
+o.default = "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("other", Value, "upstream_dns_files", translate("Domain list files"), translate("Space-separated list of domain files to download (e.g. direct-list.txt apple-cn.txt google-cn.txt)"))
+o.default = "direct-list.txt apple-cn.txt google-cn.txt"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("other", Value, "upstream_dns_file", translate("Upstream DNS file path"), translate("Generated file path for AdGuardHome dns.upstream_dns_file"))
+o.default = "/etc/AdGuardHome/adguard_upstream_dns_file.txt"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("other", Button, "upstream_dns_apply", translate("Generate upstream_dns_file"), translate("Download domain lists, generate file, set dns.upstream_dns_file and reload AdGuardHome"))
+o.inputtitle = translate("Generate")
+o:depends("upstream_dns_file_enable", "1")
+o.write=function()
+	luci.sys.exec("sh /usr/share/AdGuardHome/upstream_dns2adg.sh >/tmp/AdGuardHome_upstream_dns.log 2>&1")
+	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
+end
+
+o = s:taboption("other", Button, "upstream_dns_del", translate("Delete upstream_dns_file setting"), translate("Clear dns.upstream_dns_file only when it points to the custom file path"))
+o.inputtitle = translate("Del")
+o.write=function()
+	luci.sys.exec("sh /usr/share/AdGuardHome/upstream_dns2adg.sh del >/tmp/AdGuardHome_upstream_dns.log 2>&1")
 	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
 end
 
@@ -382,6 +439,12 @@ function m.on_commit(map)
 		luci.sys.call("sh /usr/share/AdGuardHome/custom_ipset2adg.sh noreload >/tmp/AdGuardHome_custom_ipset.log 2>&1")
 	else
 		luci.sys.call("sh /usr/share/AdGuardHome/custom_ipset2adg.sh del noreload >/tmp/AdGuardHome_custom_ipset.log 2>&1")
+	end
+	local upstream_dns_file_enable=uci:get("AdGuardHome","AdGuardHome","upstream_dns_file_enable")
+	if upstream_dns_file_enable=="1" then
+		luci.sys.call("sh /usr/share/AdGuardHome/upstream_dns2adg.sh noreload >/tmp/AdGuardHome_upstream_dns.log 2>&1")
+	else
+		luci.sys.call("sh /usr/share/AdGuardHome/upstream_dns2adg.sh del noreload >/tmp/AdGuardHome_upstream_dns.log 2>&1")
 	end
 	if (fs.access("/var/run/AdGserverdis")) then
 		io.popen("/etc/init.d/AdGuardHome reload &")

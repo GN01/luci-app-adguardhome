@@ -413,6 +413,10 @@ start_service() {
 	#what need to do before reload
 	config_get workdir $CONFIGURATION workdir "/etc/AdGuardHome"
 	ensure_ipset_file_sets "$configpath"
+	config_get_bool upstream_dns_file_enable $CONFIGURATION upstream_dns_file_enable 0
+	if [ "$upstream_dns_file_enable" = "1" ]; then
+		sh /usr/share/AdGuardHome/upstream_dns2adg.sh noreload >/dev/null 2>&1
+	fi
 	config_get backupfile $CONFIGURATION backupfile ""
 	mkdir -p $workdir/data
 	if [ -n "$backupfile" ] && [ ! -d "$workdir/data" ]; then
@@ -592,6 +596,10 @@ do_crontab(){
 	findstr="/usr/share/AdGuardHome/gfwipset2adg.sh"
 	default="31 3 * * * /usr/share/AdGuardHome/gfwipset2adg.sh"
 	[ "$enabled" == "0" ] || [ "${crontab//autogfwipset/}" == "$crontab" ] && cronenable=0 || cronenable=1
+	crontab_editor
+	findstr="/usr/share/AdGuardHome/upstream_dns2adg.sh"
+	default="32 3 * * * /usr/share/AdGuardHome/upstream_dns2adg.sh"
+	[ "$enabled" == "0" ] || [ "${crontab//autoupstreamdns/}" == "$crontab" ] && cronenable=0 || cronenable=1
 	crontab_editor
 	[ "$cronreload" -gt 0 ] && /etc/init.d/cron restart
 	#[ "$commit" -gt 0 ] && uci commit AdGuardHome
