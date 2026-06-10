@@ -344,3 +344,61 @@ msgstr "仅当 dns.ipset_file 指向自定义路径时清空该设置"
 
 msgid ""
 msgstr ""
+
+msgid "Enable upstream_dns_file"
+msgstr "启用 upstream_dns_file"
+
+msgid "Download Loyalsoldier domain lists and generate AdGuardHome dns.upstream_dns_file for DNS split routing"
+msgstr "下载 Loyalsoldier 域名列表并生成 AdGuardHome dns.upstream_dns_file 用于 DNS 分流"
+
+msgid "CN upstream DNS"
+msgstr "国内上游 DNS"
+
+msgid "Upstream DNS for China direct domains (space-separated, e.g. https://223.5.5.5/dns-query https://1.12.12.12/dns-query)"
+msgstr "国内直连域名的上游 DNS（空格分隔，如 https://223.5.5.5/dns-query https://1.12.12.12/dns-query）"
+
+msgid "Default upstream DNS"
+msgstr "默认上游 DNS"
+
+msgid "Default fallback upstream DNS for non-China domains (space-separated, e.g. https://dns.cloudflare.com/dns-query https://dns.google/dns-query)"
+msgstr "非国内域名的默认回退上游 DNS（空格分隔，如 https://dns.cloudflare.com/dns-query https://dns.google/dns-query）"
+
+msgid "GitHub source URL"
+msgstr "GitHub 下载源"
+
+msgid "Base URL for downloading domain lists from GitHub"
+msgstr "从 GitHub 下载域名列表的基础 URL"
+
+msgid "CDN source URL"
+msgstr "CDN 下载源"
+
+msgid "Fallback CDN base URL if GitHub download fails"
+msgstr "GitHub 下载失败时的 CDN 回退基础 URL"
+
+msgid "Domain list files"
+msgstr "域名列表文件"
+
+msgid "Space-separated list of domain files to download (e.g. direct-list.txt apple-cn.txt google-cn.txt)"
+msgstr "要下载的域名文件列表（空格分隔，如 direct-list.txt apple-cn.txt google-cn.txt）"
+
+msgid "Upstream DNS file path"
+msgstr "upstream_dns_file 路径"
+
+msgid "Generated file path for AdGuardHome dns.upstream_dns_file"
+msgstr "AdGuardHome dns.upstream_dns_file 的生成文件路径"
+
+msgid "Generate upstream_dns_file"
+msgstr "生成 upstream_dns_file"
+
+msgid "Download domain lists, generate file, set dns.upstream_dns_file and reload AdGuardHome"
+msgstr "下载域名列表、生成文件、设置 dns.upstream_dns_file 并重载 AdGuardHome"
+
+msgid "Delete upstream_dns_file setting"
+msgstr "删除 upstream_dns_file 设置"
+
+msgid "Clear dns.upstream_dns_file only when it points to the custom file path"
+msgstr "仅当 dns.upstream_dns_file 指向自定义路径时清空该设置"
+
+msgid "Auto update upstream_dns_file and restart AdGuardHome"
+msgstr "自动更新 upstream_dns_file 并重启 AdGuardHome"
+
