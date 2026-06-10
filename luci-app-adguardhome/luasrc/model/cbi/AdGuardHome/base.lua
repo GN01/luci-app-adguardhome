@@ -259,6 +259,65 @@ o.widget = "checkbox"
 o.default = nil
 o.optional = false
 
+---- Custom ipset_file Settings ----
+o = s:taboption("other", Flag, "custom_ipset_enable", translate("Enable custom ipset_file"), translate("Generate AdGuardHome ipset_file from custom domains and URL sources"))
+o.default = 0
+o.optional = true
+
+o = s:taboption("other", Value, "custom_ipset_name", translate("Custom ipset name"), translate("Only letters, numbers, underscore, dash and dot are allowed"))
+o.default = "adguardhome"
+o.datatype = "string"
+o.optional = false
+o:depends("custom_ipset_enable", "1")
+o.validate=function(self, value)
+	if not value or value == "" or value:match("[^A-Za-z0-9_.%-]") then
+		if m.message then
+			m.message = m.message .. "\nerror! custom ipset name is invalid"
+		else
+			m.message = "error! custom ipset name is invalid"
+		end
+		return nil
+	end
+	return value
+end
+
+o = s:taboption("other", Value, "custom_ipset_file", translate("Custom ipset_file path"), translate("Generated file path for AdGuardHome dns.ipset_file"))
+o.default = "/etc/AdGuardHome/custom_ipset.txt"
+o.datatype = "string"
+o.optional = false
+o:depends("custom_ipset_enable", "1")
+
+o = s:taboption("other", TextValue, "custom_ipset_domains", translate("Custom ipset domains"), translate("One domain or rule per line. Supported forms: example.com, [/example.com/]server, /example.com/setname"))
+o.rows = 8
+o.wrap = "off"
+o.optional = true
+o:depends("custom_ipset_enable", "1")
+o.cfgvalue = function(self, section)
+	return uci:get("AdGuardHome", section, "custom_ipset_domains") or ""
+end
+o.write = function(self, section, value)
+	uci:set("AdGuardHome", section, "custom_ipset_domains", value:gsub("\r\n", "\n"))
+end
+
+o = s:taboption("other", DynamicList, "custom_ipset_urls", translate("Custom ipset source URLs"), translate("One URL per source file. Sources are downloaded when generating the ipset_file"))
+o.optional = true
+o:depends("custom_ipset_enable", "1")
+
+o = s:taboption("other", Button, "custom_ipset_apply", translate("Generate custom ipset_file"), translate("Generate file, set dns.ipset_file, create ipset name and reload AdGuardHome"))
+o.inputtitle = translate("Generate")
+o:depends("custom_ipset_enable", "1")
+o.write=function()
+	luci.sys.exec("sh /usr/share/AdGuardHome/custom_ipset2adg.sh >/tmp/AdGuardHome_custom_ipset.log 2>&1")
+	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
+end
+
+o = s:taboption("other", Button, "custom_ipset_del", translate("Delete custom ipset_file setting"), translate("Clear dns.ipset_file only when it points to the custom ipset_file path"))
+o.inputtitle = translate("Del")
+o.write=function()
+	luci.sys.exec("sh /usr/share/AdGuardHome/custom_ipset2adg.sh del >/tmp/AdGuardHome_custom_ipset.log 2>&1")
+	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
+end
+
 ---- GFWList Settings ----
 local a
 if fs.access(configpath) then
@@ -318,6 +377,12 @@ o.optional = false
 fs.writefile("/var/run/AdG_log_pos","0")
 
 function m.on_commit(map)
+	local custom_ipset_enable=uci:get("AdGuardHome","AdGuardHome","custom_ipset_enable")
+	if custom_ipset_enable=="1" then
+		luci.sys.call("sh /usr/share/AdGuardHome/custom_ipset2adg.sh noreload >/tmp/AdGuardHome_custom_ipset.log 2>&1")
+	else
+		luci.sys.call("sh /usr/share/AdGuardHome/custom_ipset2adg.sh del noreload >/tmp/AdGuardHome_custom_ipset.log 2>&1")
+	end
 	if (fs.access("/var/run/AdGserverdis")) then
 		io.popen("/etc/init.d/AdGuardHome reload &")
 		return
