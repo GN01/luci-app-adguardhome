@@ -287,6 +287,51 @@ msgstr "开机网络正常才启动"
 msgid "Other Settings"
 msgstr "其它设置"
 
+msgid "Enable custom ipset_file"
+msgstr "启用自定义 ipset_file"
+
+msgid "Generate AdGuardHome ipset_file from custom domains and URL sources"
+msgstr "从自定义域名和链接源生成 AdGuardHome ipset_file"
+
+msgid "Custom ipset name"
+msgstr "自定义 ipset 名称"
+
+msgid "Only letters, numbers, underscore, dash and dot are allowed"
+msgstr "仅允许字母、数字、下划线、短横线和点"
+
+msgid "Custom ipset_file path"
+msgstr "自定义 ipset_file 路径"
+
+msgid "Generated file path for AdGuardHome dns.ipset_file"
+msgstr "AdGuardHome dns.ipset_file 的生成文件路径"
+
+msgid "Custom ipset domains"
+msgstr "自定义 ipset 域名"
+
+msgid "One domain or rule per line. Supported forms: example.com, [/example.com/]server, /example.com/setname"
+msgstr "每行一个域名或规则。支持格式：example.com、[/example.com/]server、/example.com/setname"
+
+msgid "Custom ipset source URLs"
+msgstr "自定义 ipset 来源链接"
+
+msgid "One URL per source file. Sources are downloaded when generating the ipset_file"
+msgstr "每个来源文件填写一个 URL。生成 ipset_file 时会下载这些来源"
+
+msgid "Generate custom ipset_file"
+msgstr "生成自定义 ipset_file"
+
+msgid "Generate file, set dns.ipset_file, create ipset name and reload AdGuardHome"
+msgstr "生成文件、设置 dns.ipset_file、创建 ipset 名称并重载 AdGuardHome"
+
+msgid "Generate"
+msgstr "生成"
+
+msgid "Delete custom ipset_file setting"
+msgstr "删除自定义 ipset_file 设置"
+
+msgid "Clear dns.ipset_file only when it points to the custom ipset_file path"
+msgstr "仅当 dns.ipset_file 指向自定义路径时清空该设置"
+
 msgid ""
 msgstr ""
 
