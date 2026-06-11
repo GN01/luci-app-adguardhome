@@ -1,6 +1,7 @@
 #!/bin/sh
 
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+DEFAULT_WHITELIST_DOMAINS_FILE="${WHITELIST_IPSET_DEFAULT_FILE:-/etc/ssrplus/white.list}"
 
 uci_get() {
 	local key="$1"
@@ -14,7 +15,15 @@ uci_get() {
 	if [ -z "$value" ] && command -v uci >/dev/null 2>&1; then
 		value="$(uci get "AdGuardHome.AdGuardHome.$key" 2>/dev/null)"
 	fi
-	[ -n "$value" ] && printf '%s\n' "$value" || printf '%s\n' "$default"
+	if [ -n "$value" ]; then
+		printf '%s\n' "$value"
+		return
+	fi
+	if [ "$key" = "whitelist_ipset_domains" ] && [ -f "$DEFAULT_WHITELIST_DOMAINS_FILE" ]; then
+		cat "$DEFAULT_WHITELIST_DOMAINS_FILE"
+		return
+	fi
+	printf '%s\n' "$default"
 }
 
 yaml_set_dns_ipset() {

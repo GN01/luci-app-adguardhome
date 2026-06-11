@@ -33,6 +33,11 @@ if grep -q 'uci:set("AdGuardHome", section, "whitelist_ipset_domains", value:gsu
 	exit 1
 fi
 
+grep -q 'fs.readfile("/etc/ssrplus/white.list")' "$BASE_LUA" || {
+	echo "LuCI whitelist domains should default to /etc/ssrplus/white.list when no plugin value is saved"
+	exit 1
+}
+
 if rg -n "ucitracktest|AdGlucitest" "$BASE_LUA" "$MANUAL_LUA"; then
 	echo "LuCI pages should not use hidden ucitracktest state"
 	exit 1

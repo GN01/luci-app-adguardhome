@@ -211,7 +211,11 @@ o.wrap = "off"
 o.optional = true
 o:depends("whitelist_ipset_enable", "1")
 o.cfgvalue = function(self, section)
-	return uci:get("AdGuardHome", section, "whitelist_ipset_domains") or ""
+	local value = uci:get("AdGuardHome", section, "whitelist_ipset_domains")
+	if value and value ~= "" then
+		return value
+	end
+	return fs.readfile("/etc/ssrplus/white.list") or ""
 end
 o.write = function(self, section, value)
 	local normalized = value:gsub("\r\n", "\n")

@@ -5,6 +5,8 @@ ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 SCRIPT="$ROOT_DIR/root/usr/share/AdGuardHome/whitelist_ipset2adg.sh"
 TMP_DIR="${TMPDIR:-/tmp}/whitelist-ipset-test.$$"
 CONFIG="$TMP_DIR/AdGuardHome.yaml"
+CONFIG_DEFAULT="$TMP_DIR/AdGuardHome-default.yaml"
+DEFAULT_DOMAINS="$TMP_DIR/ssr-white.list"
 IPSET_LOG="$TMP_DIR/ipset.log"
 
 cleanup() {
@@ -72,5 +74,27 @@ if grep -q "ipset_file:" "$CONFIG"; then
 	exit 1
 fi
 grep -q 'upstream_dns_file: "/opt/adguardhome/conf/adguard_upstream_dns_file.txt"' "$CONFIG"
+
+cat > "$CONFIG_DEFAULT" <<'YAML'
+dns:
+  upstream_dns:
+    - 223.5.5.5
+  ipset: []
+  filtering_enabled: true
+YAML
+
+cat > "$DEFAULT_DOMAINS" <<'EOF_DEFAULT_DOMAINS'
+ssrplus.example.com
+.ssrplus-wild.example
+EOF_DEFAULT_DOMAINS
+
+WHITELIST_IPSET_CONFIG="$CONFIG_DEFAULT" \
+WHITELIST_IPSET_DEFAULT_FILE="$DEFAULT_DOMAINS" \
+WHITELIST_IPSET_NO_RELOAD="1" \
+WHITELIST_IPSET_TEST_IPSET_LOG="$IPSET_LOG" \
+sh "$SCRIPT"
+
+grep -q '    - ssrplus.example.com/whitelist' "$CONFIG_DEFAULT"
+grep -q '    - ssrplus-wild.example/whitelist' "$CONFIG_DEFAULT"
 
 echo "whitelist_ipset2adg smoke test passed"
