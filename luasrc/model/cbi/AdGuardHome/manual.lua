@@ -84,13 +84,6 @@ end
 end
 end
 function m.on_commit(map)
-	local ucitracktest=uci:get("AdGuardHome","AdGuardHome","ucitracktest")
-	if ucitracktest=="1" then
-		return
-	elseif ucitracktest=="0" then
-		io.popen("/etc/init.d/AdGuardHome reload &")
-	else
-		fs.writefile("/var/run/AdGlucitest","")
-	end
+	io.popen("/etc/init.d/AdGuardHome reload &")
 end
 return m

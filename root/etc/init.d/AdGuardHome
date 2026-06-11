@@ -544,7 +544,6 @@ start_service() {
 
 reload_service()
 {
-	rm /var/run/AdGlucitest >/dev/null 2>&1
 	echo "AdGuardHome reloading"
 	start
 }

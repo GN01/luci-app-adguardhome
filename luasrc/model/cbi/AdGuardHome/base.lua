@@ -214,7 +214,8 @@ o.cfgvalue = function(self, section)
 	return uci:get("AdGuardHome", section, "whitelist_ipset_domains") or ""
 end
 o.write = function(self, section, value)
-	uci:set("AdGuardHome", section, "whitelist_ipset_domains", value:gsub("\r\n", "\n"))
+	local normalized = value:gsub("\r\n", "\n")
+	uci:set("AdGuardHome", section, "whitelist_ipset_domains", normalized)
 end
 
 ---- Upstream DNS Settings ----
@@ -355,24 +356,6 @@ function m.on_commit(map)
 		io.popen("/etc/init.d/AdGuardHome reload &")
 		return
 	end
-	local ucitracktest=uci:get("AdGuardHome","AdGuardHome","ucitracktest")
-	if ucitracktest=="1" then
-		return
-	elseif ucitracktest=="0" then
-		io.popen("/etc/init.d/AdGuardHome reload &")
-	else
-		if (fs.access("/var/run/AdGlucitest")) then
-			uci:set("AdGuardHome","AdGuardHome","ucitracktest","0")
-			io.popen("/etc/init.d/AdGuardHome reload &")
-		else
-			fs.writefile("/var/run/AdGlucitest","")
-			if (ucitracktest=="2") then
-				uci:set("AdGuardHome","AdGuardHome","ucitracktest","1")
-			else
-				uci:set("AdGuardHome","AdGuardHome","ucitracktest","2")
-			end
-		end
-        uci:commit("AdGuardHome")
-	end
+	io.popen("/etc/init.d/AdGuardHome reload &")
 end
 return m
