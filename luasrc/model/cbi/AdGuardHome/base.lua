@@ -183,7 +183,7 @@ o.optional = true
 ---- IPSet Settings ----
 s:tab("ipset", translate("IPSet Settings"))
 
-o = s:taboption("ipset", Flag, "whitelist_ipset_enable", translate("Enable whitelist ipset_file"), translate("Like ssrplus bypass proxy domains: add DNS results to the whitelist ipset. The whitelist ipset has the highest proxy priority."))
+o = s:taboption("ipset", Flag, "whitelist_ipset_enable", translate("Enable whitelist ipset"), translate("Like ssrplus bypass proxy domains: add DNS results to the whitelist ipset through AdGuardHome dns.ipset. The whitelist ipset has the highest proxy priority."))
 o.default = 0
 o.optional = true
 
@@ -204,13 +204,7 @@ o.validate=function(self, value)
 	return value
 end
 
-o = s:taboption("ipset", Value, "whitelist_ipset_file", translate("Whitelist ipset_file path"), translate("Generated file path for AdGuardHome dns.ipset_file"))
-o.default = "/etc/AdGuardHome/whitelist_ipset.txt"
-o.datatype = "string"
-o.optional = false
-o:depends("whitelist_ipset_enable", "1")
-
-o = s:taboption("ipset", TextValue, "whitelist_ipset_domains", translate("Whitelist ipset domains"), translate("One bypass proxy domain or rule per line. Supported forms: example.com, [/example.com/]server, /example.com/setname"))
+o = s:taboption("ipset", TextValue, "whitelist_ipset_domains", translate("Whitelist ipset domains"), translate("One bypass proxy domain or rule per line. Saved directly to AdGuardHome dns.ipset. Supported forms: example.com, [/example.com/]server, /example.com/setname"))
 o.rows = 8
 o.wrap = "off"
 o.optional = true
@@ -220,21 +214,6 @@ o.cfgvalue = function(self, section)
 end
 o.write = function(self, section, value)
 	uci:set("AdGuardHome", section, "whitelist_ipset_domains", value:gsub("\r\n", "\n"))
-end
-
-o = s:taboption("ipset", Button, "whitelist_ipset_apply", translate("Generate whitelist ipset_file"), translate("Generate file, set dns.ipset_file, create ipset name and reload AdGuardHome"))
-o.inputtitle = translate("Generate")
-o:depends("whitelist_ipset_enable", "1")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/whitelist_ipset2adg.sh >/tmp/AdGuardHome_whitelist_ipset.log 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-
-o = s:taboption("ipset", Button, "whitelist_ipset_del", translate("Delete whitelist ipset_file setting"), translate("Clear dns.ipset_file only when it points to the whitelist ipset_file path"))
-o.inputtitle = translate("Del")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/whitelist_ipset2adg.sh del >/tmp/AdGuardHome_whitelist_ipset.log 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
 end
 
 ---- Upstream DNS Settings ----
@@ -369,10 +348,12 @@ o.optional = false
 fs.writefile("/var/run/AdG_log_pos","0")
 
 function m.on_commit(map)
-	-- Only clean up ipset config when disabled (fast operation, no download)
+	-- Keep whitelist_ipset in dns.ipset in sync with LuCI settings.
 	local whitelist_ipset_enable=uci:get("AdGuardHome","AdGuardHome","whitelist_ipset_enable")
 	if whitelist_ipset_enable~="1" then
 		luci.sys.call("sh /usr/share/AdGuardHome/whitelist_ipset2adg.sh del noreload >/tmp/AdGuardHome_whitelist_ipset.log 2>&1")
+	else
+		luci.sys.call("sh /usr/share/AdGuardHome/whitelist_ipset2adg.sh noreload >/tmp/AdGuardHome_whitelist_ipset.log 2>&1")
 	end
 	-- Only clean up upstream dns config when disabled (fast operation, no download)
 	local upstream_dns_file_enable=uci:get("AdGuardHome","AdGuardHome","upstream_dns_file_enable")

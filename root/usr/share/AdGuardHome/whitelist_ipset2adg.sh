@@ -9,7 +9,6 @@ uci_get() {
 	case "$key" in
 		configpath) value="${WHITELIST_IPSET_CONFIG:-}" ;;
 		whitelist_ipset_name) value="${WHITELIST_IPSET_NAME:-}" ;;
-		whitelist_ipset_file) value="${WHITELIST_IPSET_FILE:-}" ;;
 		whitelist_ipset_domains) value="${WHITELIST_IPSET_DOMAINS:-}" ;;
 	esac
 	if [ -z "$value" ] && command -v uci >/dev/null 2>&1; then
@@ -18,52 +17,64 @@ uci_get() {
 	[ -n "$value" ] && printf '%s\n' "$value" || printf '%s\n' "$default"
 }
 
-yaml_get_dns_value() {
-	local key="$1"
+yaml_set_dns_ipset() {
+	local entries_file="$1"
 	local file="$2"
-	awk -v key="$key" '
-		$0 ~ /^dns:/ { in_dns=1; next }
-		in_dns && $0 ~ /^[^[:space:]]/ { in_dns=0 }
-		in_dns && $1 == key ":" {
-			sub(/^[^:]+:[[:space:]]*/, "")
-			gsub(/^"|"$/, "")
-			print
-			exit
-		}
-	' "$file"
-}
-
-yaml_set_dns_value() {
-	local key="$1"
-	local value="$2"
-	local file="$3"
 	local tmp="${file}.tmp.$$"
-	awk -v key="$key" -v value="$value" '
+
+	awk -v entries_file="$entries_file" '
+		BEGIN {
+			while ((getline line < entries_file) > 0) {
+				if (line != "") {
+					entries[++entry_count] = line
+				}
+			}
+			close(entries_file)
+		}
+		function print_ipset(    i) {
+			if (entry_count == 0) {
+				print "  ipset: []"
+				return
+			}
+			print "  ipset:"
+			for (i = 1; i <= entry_count; i++) {
+				print "    - " entries[i]
+			}
+		}
 		$0 ~ /^dns:/ { in_dns=1; print; next }
 		in_dns && $0 ~ /^[^[:space:]]/ {
 			if (!done) {
-				print "  " key ": " value
+				print_ipset()
 				done=1
 			}
 			in_dns=0
 		}
-		in_dns && $1 == key ":" {
-			if (!done) {
-				print "  " key ": " value
-				done=1
-			}
+		in_dns && $1 == "ipset_file:" {
 			next
 		}
-		in_dns && !done && $1 == "ipset:" {
-			print
-			print "  " key ": " value
-			done=1
+		in_dns && $1 == "ipset:" {
+			if (!done) {
+				print_ipset()
+				done=1
+			}
+			skip_ipset=1
 			next
+		}
+		in_dns && skip_ipset {
+			if ($0 ~ /^  [^[:space:]-]/) {
+				skip_ipset=0
+			} else {
+				next
+			}
+		}
+		in_dns && !done && $1 == "filtering_enabled:" {
+			print_ipset()
+			done=1
 		}
 		{ print }
 		END {
 			if (in_dns && !done) {
-				print "  " key ": " value
+				print_ipset()
 			}
 		}
 	' "$file" > "$tmp" && mv "$tmp" "$file"
@@ -136,7 +147,6 @@ reload_arg="$2"
 
 configpath="$(uci_get configpath "/etc/AdGuardHome.yaml")"
 setname="$(uci_get whitelist_ipset_name "whitelist")"
-output="$(uci_get whitelist_ipset_file "/etc/AdGuardHome/whitelist_ipset.txt")"
 
 if [ ! -f "$configpath" ]; then
 	echo "please make a config first"
@@ -151,29 +161,32 @@ case "$setname" in
 esac
 
 if [ "$action" = "del" ]; then
-	current="$(yaml_get_dns_value ipset_file "$configpath")"
-	if [ "$current" = "$output" ]; then
-		yaml_set_dns_value ipset_file '""' "$configpath"
-		reload_service "$reload_arg"
-	fi
+	empty_file="${TMPDIR:-/tmp}/whitelist_ipset2adg.empty.$$"
+	: > "$empty_file"
+	yaml_set_dns_ipset "$empty_file" "$configpath"
+	rm -f "$empty_file"
+	reload_service "$reload_arg"
 	exit 0
 fi
 
 tmpdir="${TMPDIR:-/tmp}/whitelist_ipset2adg.$$"
-mkdir -p "$tmpdir" "${output%/*}"
+mkdir -p "$tmpdir"
 trap 'rm -rf "$tmpdir"' EXIT
 
 domains_file="$tmpdir/domains.raw"
+entries_file="$tmpdir/ipset.entries"
 : > "$domains_file"
 uci_get whitelist_ipset_domains "" >> "$domains_file"
 
-normalize_domains < "$domains_file" | awk -v setname="$setname" '{ print $0 "/" setname }' | sort -u > "$output"
+normalize_domains < "$domains_file" | awk -v setname="$setname" '{ print $0 "/" setname }' | sort -u > "$entries_file"
 
-if [ ! -s "$output" ]; then
+if [ ! -s "$entries_file" ]; then
 	echo "no valid domains for whitelist ipset"
-	exit 1
+	yaml_set_dns_ipset "$entries_file" "$configpath"
+	reload_service "$reload_arg"
+	exit 0
 fi
 
-yaml_set_dns_value ipset_file "$output" "$configpath"
+yaml_set_dns_ipset "$entries_file" "$configpath"
 ensure_ipset "$setname"
 reload_service "$reload_arg"

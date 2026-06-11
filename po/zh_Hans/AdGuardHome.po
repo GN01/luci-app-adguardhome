@@ -158,6 +158,9 @@ msgstr "未添加"
 msgid "Del"
 msgstr "删除"
 
+msgid "Generate"
+msgstr "生成"
+
 msgid "Change management password"
 msgstr "更改登录密码"
 
@@ -287,11 +290,11 @@ msgstr "IPSet 设置"
 msgid "Upstream DNS"
 msgstr "DNS 分流"
 
-msgid "Enable whitelist ipset_file"
-msgstr "启用 whitelist ipset_file"
+msgid "Enable whitelist ipset"
+msgstr "启用 whitelist ipset"
 
-msgid "Like ssrplus bypass proxy domains: add DNS results to the whitelist ipset. The whitelist ipset has the highest proxy priority."
-msgstr "功能和 ssrplus 的“不走代理的域名”一样：将解析结果添加到名为 whitelist 的 ipset 中，whitelist 是代理的最高优先级。"
+msgid "Like ssrplus bypass proxy domains: add DNS results to the whitelist ipset through AdGuardHome dns.ipset. The whitelist ipset has the highest proxy priority."
+msgstr "功能和 ssrplus 的“不走代理的域名”一样：通过 AdGuardHome dns.ipset 将解析结果添加到名为 whitelist 的 ipset 中，whitelist 是代理的最高优先级。"
 
 msgid "Whitelist ipset name"
 msgstr "Whitelist ipset 名称"
@@ -299,32 +302,11 @@ msgstr "Whitelist ipset 名称"
 msgid "Only letters, numbers, underscore, dash and dot are allowed"
 msgstr "仅允许字母、数字、下划线、短横线和点"
 
-msgid "Whitelist ipset_file path"
-msgstr "Whitelist ipset_file 路径"
-
-msgid "Generated file path for AdGuardHome dns.ipset_file"
-msgstr "AdGuardHome dns.ipset_file 的生成文件路径"
-
 msgid "Whitelist ipset domains"
 msgstr "Whitelist ipset 域名"
 
-msgid "One bypass proxy domain or rule per line. Supported forms: example.com, [/example.com/]server, /example.com/setname"
-msgstr "每行一个不走代理的域名或规则。支持格式：example.com、[/example.com/]server、/example.com/setname"
-
-msgid "Generate whitelist ipset_file"
-msgstr "生成 whitelist ipset_file"
-
-msgid "Generate file, set dns.ipset_file, create ipset name and reload AdGuardHome"
-msgstr "生成文件、设置 dns.ipset_file、创建 ipset 名称并重载 AdGuardHome"
-
-msgid "Generate"
-msgstr "生成"
-
-msgid "Delete whitelist ipset_file setting"
-msgstr "删除 whitelist ipset_file 设置"
-
-msgid "Clear dns.ipset_file only when it points to the whitelist ipset_file path"
-msgstr "仅当 dns.ipset_file 指向 whitelist ipset_file 路径时清空该设置"
+msgid "One bypass proxy domain or rule per line. Saved directly to AdGuardHome dns.ipset. Supported forms: example.com, [/example.com/]server, /example.com/setname"
+msgstr "每行一个不走代理的域名或规则。保存后直接写入 AdGuardHome dns.ipset。支持格式：example.com、[/example.com/]server、/example.com/setname"
 
 msgid "Enable upstream_dns_file"
 msgstr "启用 upstream_dns_file"

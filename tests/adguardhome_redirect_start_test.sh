@@ -38,4 +38,14 @@ if printf "%s\n" "$start_service_body" | grep -q "sleep 5.*_do_redirect 1"; then
 	exit 1
 fi
 
+if printf "%s\n" "$start_service_body" | grep -q "upstream_dns2adg.sh noreload"; then
+	echo "start_service must not block on upstream_dns2adg.sh"
+	exit 1
+fi
+
+if grep -q "CONFIGURATION\\|CRON_FILE\\|GFWSET\\|AdGuardHome_PORT\\|ADDITIONAL_ARGS\\|SET_TZ" "$INIT_SCRIPT"; then
+	echo "init script internal names should be lowercase"
+	exit 1
+fi
+
 echo "AdGuardHome redirect startup order test passed"

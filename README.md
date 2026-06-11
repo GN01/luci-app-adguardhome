@@ -32,8 +32,8 @@ https://github.com/sirpdboy/luci-app-adguardhome
 `whitelist_ipset` 功能类似 ssrplus 的“不走代理的域名”：将指定域名的解析结果添加到名为 `whitelist` 的 ipset 中。
 
 - 默认 ipset 名称：`whitelist`
-- 默认生成文件：`/etc/AdGuardHome/whitelist_ipset.txt`
-- 生成后会写入 AdGuardHome 配置中的 `dns.ipset_file`
+- 保存后会直接写入 AdGuardHome 配置中的 `dns.ipset`
+- 不再使用 `dns.ipset_file`，避免文件不存在导致 AdGuardHome 启动失败
 - `whitelist` 是代理规则中的最高优先级，适合放置需要强制不走代理的域名
 - 支持每行一个域名或规则，例如：`example.com`、`[/example.com/]server`、`/example.com/setname`
 
