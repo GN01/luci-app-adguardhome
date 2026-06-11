@@ -7,11 +7,10 @@ uci_get() {
 	local default="$2"
 	local value=""
 	case "$key" in
-		configpath) value="${CUSTOM_IPSET_CONFIG:-}" ;;
-		custom_ipset_name) value="${CUSTOM_IPSET_NAME:-}" ;;
-		custom_ipset_file) value="${CUSTOM_IPSET_FILE:-}" ;;
-		custom_ipset_domains) value="${CUSTOM_IPSET_DOMAINS:-}" ;;
-		custom_ipset_urls) value="${CUSTOM_IPSET_URLS:-}" ;;
+		configpath) value="${WHITELIST_IPSET_CONFIG:-}" ;;
+		whitelist_ipset_name) value="${WHITELIST_IPSET_NAME:-}" ;;
+		whitelist_ipset_file) value="${WHITELIST_IPSET_FILE:-}" ;;
+		whitelist_ipset_domains) value="${WHITELIST_IPSET_DOMAINS:-}" ;;
 	esac
 	if [ -z "$value" ] && command -v uci >/dev/null 2>&1; then
 		value="$(uci get "AdGuardHome.AdGuardHome.$key" 2>/dev/null)"
@@ -114,26 +113,10 @@ normalize_domains() {
 	'
 }
 
-download_url() {
-	local url="$1"
-	local outfile="$2"
-	case "$url" in
-		file://*)
-			cp "${url#file://}" "$outfile"
-			return $?
-			;;
-	esac
-	if command -v wget-ssl >/dev/null 2>&1; then
-		wget-ssl --no-check-certificate "$url" -O "$outfile"
-	else
-		wget --no-check-certificate "$url" -O "$outfile"
-	fi
-}
-
 ensure_ipset() {
 	local setname="$1"
-	if [ -n "${CUSTOM_IPSET_TEST_IPSET_LOG:-}" ]; then
-		printf 'create %s hash:ip\n' "$setname" >> "$CUSTOM_IPSET_TEST_IPSET_LOG"
+	if [ -n "${WHITELIST_IPSET_TEST_IPSET_LOG:-}" ]; then
+		printf 'create %s hash:ip\n' "$setname" >> "$WHITELIST_IPSET_TEST_IPSET_LOG"
 		return
 	fi
 	if command -v ipset >/dev/null 2>&1; then
@@ -142,7 +125,7 @@ ensure_ipset() {
 }
 
 reload_service() {
-	[ "${CUSTOM_IPSET_NO_RELOAD:-0}" = "1" ] && return
+	[ "${WHITELIST_IPSET_NO_RELOAD:-0}" = "1" ] && return
 	[ "$1" = "noreload" ] && return
 	/etc/init.d/AdGuardHome reload
 }
@@ -152,8 +135,8 @@ reload_arg="$2"
 [ "$action" = "noreload" ] && reload_arg="noreload" && action=""
 
 configpath="$(uci_get configpath "/etc/AdGuardHome.yaml")"
-setname="$(uci_get custom_ipset_name "adguardhome")"
-output="$(uci_get custom_ipset_file "/etc/AdGuardHome/custom_ipset.txt")"
+setname="$(uci_get whitelist_ipset_name "whitelist")"
+output="$(uci_get whitelist_ipset_file "/etc/AdGuardHome/whitelist_ipset.txt")"
 
 if [ ! -f "$configpath" ]; then
 	echo "please make a config first"
@@ -162,7 +145,7 @@ fi
 
 case "$setname" in
 	*[!A-Za-z0-9_.-]*|"")
-		echo "invalid custom ipset name: $setname"
+		echo "invalid whitelist ipset name: $setname"
 		exit 1
 		;;
 esac
@@ -176,26 +159,18 @@ if [ "$action" = "del" ]; then
 	exit 0
 fi
 
-tmpdir="${TMPDIR:-/tmp}/custom_ipset2adg.$$"
+tmpdir="${TMPDIR:-/tmp}/whitelist_ipset2adg.$$"
 mkdir -p "$tmpdir" "${output%/*}"
 trap 'rm -rf "$tmpdir"' EXIT
 
 domains_file="$tmpdir/domains.raw"
 : > "$domains_file"
-uci_get custom_ipset_domains "" >> "$domains_file"
+uci_get whitelist_ipset_domains "" >> "$domains_file"
 
-idx=0
-uci_get custom_ipset_urls "" | while IFS= read -r url; do
-	[ -z "$url" ] && continue
-	case "$url" in \#*) continue ;; esac
-	idx=$((idx + 1))
-	download_url "$url" "$tmpdir/url.$idx" && cat "$tmpdir/url.$idx" >> "$domains_file"
-done
-
-normalize_domains < "$domains_file" | awk -v setname="$setname" '{ print "/" $0 "/" setname }' | sort -u > "$output"
+normalize_domains < "$domains_file" | awk -v setname="$setname" '{ print $0 "/" setname }' | sort -u > "$output"
 
 if [ ! -s "$output" ]; then
-	echo "no valid domains for custom ipset"
+	echo "no valid domains for whitelist ipset"
 	exit 1
 fi
 

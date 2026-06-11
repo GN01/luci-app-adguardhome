@@ -1,4 +1,6 @@
 
+msgid "Base Setting"
+msgstr "基础设置"
 
 msgid "Log"
 msgstr "日志"
@@ -7,7 +9,7 @@ msgid "AdGuardHome's version"
 msgstr "AdGuardHome 版本"
 
 msgid "Needed to click 'save&apply' to generate the configuration file"
-msgstr "需要点击“保存并应用”才能生成配置文件"
+msgstr "需要点击"保存并应用"才能生成配置文件"
 
 msgid "In case of the latest realease is a source code that can not download the binary file"
 msgstr "防止最新release只有源码，导致下载不成功"
@@ -144,9 +146,6 @@ msgstr "AdGuardHome 运行日志, 如果填 syslog 将写入系统日志; 如果
 msgid "Verbose log"
 msgstr "输出详细日志"
 
-msgid "Add gfwlist"
-msgstr "添加 GFW 列表"
-
 msgid "Add"
 msgstr "添加"
 
@@ -156,17 +155,8 @@ msgstr "已添加"
 msgid "Not added"
 msgstr "未添加"
 
-msgid "Del gfwlist"
-msgstr "删除gfw列表"
-
 msgid "Del"
 msgstr "删除"
-
-msgid "Gfwlist upstream dns server"
-msgstr "gfw列表上游服务器"
-
-msgid "Gfwlist domain upstream dns service"
-msgstr "gfw列表域名上游服务器"
 
 msgid "Change management password"
 msgstr "更改登录密码"
@@ -231,11 +221,8 @@ msgstr "自动截短运行日志"
 msgid "Auto update ipv6 hosts and restart AdGuardHome"
 msgstr "自动更新ipv6主机并重启AdGuardHome"
 
-msgid "Auto update gfwlist and restart AdGuardHome"
-msgstr "自动更新gfw列表并重启AdGuardHome"
-
-msgid "Auto update ipset list and restart AdGuardHome"
-msgstr "自动更新ipset列表并重启AdGuardHome"
+msgid "Auto update upstream_dns_file and restart AdGuardHome"
+msgstr "自动更新 upstream_dns_file 并重启 AdGuardHome"
 
 msgid "Please change time and args in crontab"
 msgstr "请在计划任务中修改时间和参数"
@@ -294,41 +281,38 @@ msgstr "其它设置"
 msgid "Core Config"
 msgstr "内核设置"
 
-msgid "will set to name gfwlist"
-msgstr "将设置为gfwlist名称"
+msgid "IPSet Settings"
+msgstr "IPSet 设置"
 
-msgid "Enable custom ipset_file"
-msgstr "启用自定义 ipset_file"
+msgid "Upstream DNS"
+msgstr "DNS 分流"
 
-msgid "Generate AdGuardHome ipset_file from custom domains and URL sources"
-msgstr "从自定义域名和链接源生成 AdGuardHome ipset_file"
+msgid "Enable whitelist ipset_file"
+msgstr "启用 whitelist ipset_file"
 
-msgid "Custom ipset name"
-msgstr "自定义 ipset 名称"
+msgid "Like ssrplus bypass proxy domains: add DNS results to the whitelist ipset. The whitelist ipset has the highest proxy priority."
+msgstr "功能和 ssrplus 的“不走代理的域名”一样：将解析结果添加到名为 whitelist 的 ipset 中，whitelist 是代理的最高优先级。"
+
+msgid "Whitelist ipset name"
+msgstr "Whitelist ipset 名称"
 
 msgid "Only letters, numbers, underscore, dash and dot are allowed"
 msgstr "仅允许字母、数字、下划线、短横线和点"
 
-msgid "Custom ipset_file path"
-msgstr "自定义 ipset_file 路径"
+msgid "Whitelist ipset_file path"
+msgstr "Whitelist ipset_file 路径"
 
 msgid "Generated file path for AdGuardHome dns.ipset_file"
 msgstr "AdGuardHome dns.ipset_file 的生成文件路径"
 
-msgid "Custom ipset domains"
-msgstr "自定义 ipset 域名"
+msgid "Whitelist ipset domains"
+msgstr "Whitelist ipset 域名"
 
-msgid "One domain or rule per line. Supported forms: example.com, [/example.com/]server, /example.com/setname"
-msgstr "每行一个域名或规则。支持格式：example.com、[/example.com/]server、/example.com/setname"
+msgid "One bypass proxy domain or rule per line. Supported forms: example.com, [/example.com/]server, /example.com/setname"
+msgstr "每行一个不走代理的域名或规则。支持格式：example.com、[/example.com/]server、/example.com/setname"
 
-msgid "Custom ipset source URLs"
-msgstr "自定义 ipset 来源链接"
-
-msgid "One URL per source file. Sources are downloaded when generating the ipset_file"
-msgstr "每个来源文件填写一个 URL。生成 ipset_file 时会下载这些来源"
-
-msgid "Generate custom ipset_file"
-msgstr "生成自定义 ipset_file"
+msgid "Generate whitelist ipset_file"
+msgstr "生成 whitelist ipset_file"
 
 msgid "Generate file, set dns.ipset_file, create ipset name and reload AdGuardHome"
 msgstr "生成文件、设置 dns.ipset_file、创建 ipset 名称并重载 AdGuardHome"
@@ -336,14 +320,11 @@ msgstr "生成文件、设置 dns.ipset_file、创建 ipset 名称并重载 AdGu
 msgid "Generate"
 msgstr "生成"
 
-msgid "Delete custom ipset_file setting"
-msgstr "删除自定义 ipset_file 设置"
+msgid "Delete whitelist ipset_file setting"
+msgstr "删除 whitelist ipset_file 设置"
 
-msgid "Clear dns.ipset_file only when it points to the custom ipset_file path"
-msgstr "仅当 dns.ipset_file 指向自定义路径时清空该设置"
-
-msgid ""
-msgstr ""
+msgid "Clear dns.ipset_file only when it points to the whitelist ipset_file path"
+msgstr "仅当 dns.ipset_file 指向 whitelist ipset_file 路径时清空该设置"
 
 msgid "Enable upstream_dns_file"
 msgstr "启用 upstream_dns_file"
@@ -390,8 +371,8 @@ msgstr "AdGuardHome dns.upstream_dns_file 的生成文件路径"
 msgid "Generate upstream_dns_file"
 msgstr "生成 upstream_dns_file"
 
-msgid "Download domain lists, generate file, set dns.upstream_dns_file and reload AdGuardHome"
-msgstr "下载域名列表、生成文件、设置 dns.upstream_dns_file 并重载 AdGuardHome"
+msgid "Download domain lists, generate file, set dns.upstream_dns_file and reload AdGuardHome. This may take a while depending on network speed."
+msgstr "下载域名列表、生成文件、设置 dns.upstream_dns_file 并重载 AdGuardHome。根据网络速度，可能需要一段时间。"
 
 msgid "Delete upstream_dns_file setting"
 msgstr "删除 upstream_dns_file 设置"
@@ -401,4 +382,3 @@ msgstr "仅当 dns.upstream_dns_file 指向自定义路径时清空该设置"
 
 msgid "Auto update upstream_dns_file and restart AdGuardHome"
 msgstr "自动更新 upstream_dns_file 并重启 AdGuardHome"
-

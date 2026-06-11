@@ -179,15 +179,123 @@ end
 o = s:taboption("core",Flag, "verbose", translate("Verbose log"))
 o.default = 0
 o.optional = true
----- gfwlist
-local a=luci.sys.call("grep -m 1 -q programadd "..configpath)
-if (a==0) then
-a="Added"
-else
-a="Not added"
+
+---- IPSet Settings ----
+s:tab("ipset", translate("IPSet Settings"))
+
+o = s:taboption("ipset", Flag, "whitelist_ipset_enable", translate("Enable whitelist ipset_file"), translate("Like ssrplus bypass proxy domains: add DNS results to the whitelist ipset. The whitelist ipset has the highest proxy priority."))
+o.default = 0
+o.optional = true
+
+o = s:taboption("ipset", Value, "whitelist_ipset_name", translate("Whitelist ipset name"), translate("Only letters, numbers, underscore, dash and dot are allowed"))
+o.default = "whitelist"
+o.datatype = "string"
+o.optional = false
+o:depends("whitelist_ipset_enable", "1")
+o.validate=function(self, value)
+	if not value or value == "" or value:match("[^A-Za-z0-9_.%-]") then
+		if m.message then
+			m.message = m.message .. "\nerror! whitelist ipset name is invalid"
+		else
+			m.message = "error! whitelist ipset name is invalid"
+		end
+		return nil
+	end
+	return value
 end
 
----- Backup Settings ----
+o = s:taboption("ipset", Value, "whitelist_ipset_file", translate("Whitelist ipset_file path"), translate("Generated file path for AdGuardHome dns.ipset_file"))
+o.default = "/etc/AdGuardHome/whitelist_ipset.txt"
+o.datatype = "string"
+o.optional = false
+o:depends("whitelist_ipset_enable", "1")
+
+o = s:taboption("ipset", TextValue, "whitelist_ipset_domains", translate("Whitelist ipset domains"), translate("One bypass proxy domain or rule per line. Supported forms: example.com, [/example.com/]server, /example.com/setname"))
+o.rows = 8
+o.wrap = "off"
+o.optional = true
+o:depends("whitelist_ipset_enable", "1")
+o.cfgvalue = function(self, section)
+	return uci:get("AdGuardHome", section, "whitelist_ipset_domains") or ""
+end
+o.write = function(self, section, value)
+	uci:set("AdGuardHome", section, "whitelist_ipset_domains", value:gsub("\r\n", "\n"))
+end
+
+o = s:taboption("ipset", Button, "whitelist_ipset_apply", translate("Generate whitelist ipset_file"), translate("Generate file, set dns.ipset_file, create ipset name and reload AdGuardHome"))
+o.inputtitle = translate("Generate")
+o:depends("whitelist_ipset_enable", "1")
+o.write=function()
+	luci.sys.exec("sh /usr/share/AdGuardHome/whitelist_ipset2adg.sh >/tmp/AdGuardHome_whitelist_ipset.log 2>&1")
+	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
+end
+
+o = s:taboption("ipset", Button, "whitelist_ipset_del", translate("Delete whitelist ipset_file setting"), translate("Clear dns.ipset_file only when it points to the whitelist ipset_file path"))
+o.inputtitle = translate("Del")
+o.write=function()
+	luci.sys.exec("sh /usr/share/AdGuardHome/whitelist_ipset2adg.sh del >/tmp/AdGuardHome_whitelist_ipset.log 2>&1")
+	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
+end
+
+---- Upstream DNS Settings ----
+s:tab("upstream", translate("Upstream DNS"))
+
+o = s:taboption("upstream", Flag, "upstream_dns_file_enable", translate("Enable upstream_dns_file"), translate("Download Loyalsoldier domain lists and generate AdGuardHome dns.upstream_dns_file for DNS split routing"))
+o.default = 0
+o.optional = true
+
+o = s:taboption("upstream", Value, "upstream_dns_cn_upstream", translate("CN upstream DNS"), translate("Upstream DNS for China direct domains (space-separated, e.g. https://223.5.5.5/dns-query https://1.12.12.12/dns-query)"))
+o.default = "https://223.5.5.5/dns-query https://1.12.12.12/dns-query"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("upstream", Value, "upstream_dns_default_upstreams", translate("Default upstream DNS"), translate("Default fallback upstream DNS for non-China domains (space-separated, e.g. https://dns.cloudflare.com/dns-query https://dns.google/dns-query)"))
+o.default = "https://dns.cloudflare.com/dns-query https://dns.google/dns-query"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("upstream", Value, "upstream_dns_base_url_github", translate("GitHub source URL"), translate("Base URL for downloading domain lists from GitHub"))
+o.default = "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("upstream", Value, "upstream_dns_base_url_cdn", translate("CDN source URL"), translate("Fallback CDN base URL if GitHub download fails"))
+o.default = "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("upstream", Value, "upstream_dns_files", translate("Domain list files"), translate("Space-separated list of domain files to download (e.g. direct-list.txt apple-cn.txt google-cn.txt)"))
+o.default = "direct-list.txt apple-cn.txt google-cn.txt"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("upstream", Value, "upstream_dns_file", translate("Upstream DNS file path"), translate("Generated file path for AdGuardHome dns.upstream_dns_file"))
+o.default = "/etc/AdGuardHome/adguard_upstream_dns_file.txt"
+o.datatype = "string"
+o.optional = false
+o:depends("upstream_dns_file_enable", "1")
+
+o = s:taboption("upstream", Button, "upstream_dns_apply", translate("Generate upstream_dns_file"), translate("Download domain lists, generate file, set dns.upstream_dns_file and reload AdGuardHome. This may take a while depending on network speed."))
+o.inputtitle = translate("Generate")
+o:depends("upstream_dns_file_enable", "1")
+o.write=function()
+	luci.sys.exec("sh /usr/share/AdGuardHome/upstream_dns2adg.sh >/tmp/AdGuardHome_upstream_dns.log 2>&1")
+	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
+end
+
+o = s:taboption("upstream", Button, "upstream_dns_del", translate("Delete upstream_dns_file setting"), translate("Clear dns.upstream_dns_file only when it points to the custom file path"))
+o.inputtitle = translate("Del")
+o.write=function()
+	luci.sys.exec("sh /usr/share/AdGuardHome/upstream_dns2adg.sh del >/tmp/AdGuardHome_upstream_dns.log 2>&1")
+	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
+end
+
+---- Other Settings ----
 s:tab("other", translate("Other Config"))
 
 ---- upgrade protect
@@ -253,197 +361,22 @@ end
 
 o = s:taboption("other",MultiValue, "crontab", translate("Crontab task"),translate("Please change time and args in crontab"))
 o:value("autohost",translate("Auto update ipv6 hosts and restart AdGuardHome"))
-o:value("autogfw",translate("Auto update gfwlist and restart AdGuardHome"))
-o:value("autogfwipset",translate("Auto update ipset list and restart AdGuardHome"))
 o:value("autoupstreamdns",translate("Auto update upstream_dns_file and restart AdGuardHome"))
 o.widget = "checkbox"
 o.default = nil
 o.optional = false
 
----- Custom ipset_file Settings ----
-o = s:taboption("other", Flag, "custom_ipset_enable", translate("Enable custom ipset_file"), translate("Generate AdGuardHome ipset_file from custom domains and URL sources"))
-o.default = 0
-o.optional = true
-
-o = s:taboption("other", Value, "custom_ipset_name", translate("Custom ipset name"), translate("Only letters, numbers, underscore, dash and dot are allowed"))
-o.default = "adguardhome"
-o.datatype = "string"
-o.optional = false
-o:depends("custom_ipset_enable", "1")
-o.validate=function(self, value)
-	if not value or value == "" or value:match("[^A-Za-z0-9_.%-]") then
-		if m.message then
-			m.message = m.message .. "\nerror! custom ipset name is invalid"
-		else
-			m.message = "error! custom ipset name is invalid"
-		end
-		return nil
-	end
-	return value
-end
-
-o = s:taboption("other", Value, "custom_ipset_file", translate("Custom ipset_file path"), translate("Generated file path for AdGuardHome dns.ipset_file"))
-o.default = "/etc/AdGuardHome/custom_ipset.txt"
-o.datatype = "string"
-o.optional = false
-o:depends("custom_ipset_enable", "1")
-
-o = s:taboption("other", TextValue, "custom_ipset_domains", translate("Custom ipset domains"), translate("One domain or rule per line. Supported forms: example.com, [/example.com/]server, /example.com/setname"))
-o.rows = 8
-o.wrap = "off"
-o.optional = true
-o:depends("custom_ipset_enable", "1")
-o.cfgvalue = function(self, section)
-	return uci:get("AdGuardHome", section, "custom_ipset_domains") or ""
-end
-o.write = function(self, section, value)
-	uci:set("AdGuardHome", section, "custom_ipset_domains", value:gsub("\r\n", "\n"))
-end
-
-o = s:taboption("other", DynamicList, "custom_ipset_urls", translate("Custom ipset source URLs"), translate("One URL per source file. Sources are downloaded when generating the ipset_file"))
-o.optional = true
-o:depends("custom_ipset_enable", "1")
-
-o = s:taboption("other", Button, "custom_ipset_apply", translate("Generate custom ipset_file"), translate("Generate file, set dns.ipset_file, create ipset name and reload AdGuardHome"))
-o.inputtitle = translate("Generate")
-o:depends("custom_ipset_enable", "1")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/custom_ipset2adg.sh >/tmp/AdGuardHome_custom_ipset.log 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-
-o = s:taboption("other", Button, "custom_ipset_del", translate("Delete custom ipset_file setting"), translate("Clear dns.ipset_file only when it points to the custom ipset_file path"))
-o.inputtitle = translate("Del")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/custom_ipset2adg.sh del >/tmp/AdGuardHome_custom_ipset.log 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-
----- Upstream DNS File Settings ----
-o = s:taboption("other", Flag, "upstream_dns_file_enable", translate("Enable upstream_dns_file"), translate("Download Loyalsoldier domain lists and generate AdGuardHome dns.upstream_dns_file for DNS split routing"))
-o.default = 0
-o.optional = true
-
-o = s:taboption("other", Value, "upstream_dns_cn_upstream", translate("CN upstream DNS"), translate("Upstream DNS for China direct domains (space-separated, e.g. https://223.5.5.5/dns-query https://1.12.12.12/dns-query)"))
-o.default = "https://223.5.5.5/dns-query https://1.12.12.12/dns-query"
-o.datatype = "string"
-o.optional = false
-o:depends("upstream_dns_file_enable", "1")
-
-o = s:taboption("other", Value, "upstream_dns_default_upstreams", translate("Default upstream DNS"), translate("Default fallback upstream DNS for non-China domains (space-separated, e.g. https://dns.cloudflare.com/dns-query https://dns.google/dns-query)"))
-o.default = "https://dns.cloudflare.com/dns-query https://dns.google/dns-query"
-o.datatype = "string"
-o.optional = false
-o:depends("upstream_dns_file_enable", "1")
-
-o = s:taboption("other", Value, "upstream_dns_base_url_github", translate("GitHub source URL"), translate("Base URL for downloading domain lists from GitHub"))
-o.default = "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release"
-o.datatype = "string"
-o.optional = false
-o:depends("upstream_dns_file_enable", "1")
-
-o = s:taboption("other", Value, "upstream_dns_base_url_cdn", translate("CDN source URL"), translate("Fallback CDN base URL if GitHub download fails"))
-o.default = "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release"
-o.datatype = "string"
-o.optional = false
-o:depends("upstream_dns_file_enable", "1")
-
-o = s:taboption("other", Value, "upstream_dns_files", translate("Domain list files"), translate("Space-separated list of domain files to download (e.g. direct-list.txt apple-cn.txt google-cn.txt)"))
-o.default = "direct-list.txt apple-cn.txt google-cn.txt"
-o.datatype = "string"
-o.optional = false
-o:depends("upstream_dns_file_enable", "1")
-
-o = s:taboption("other", Value, "upstream_dns_file", translate("Upstream DNS file path"), translate("Generated file path for AdGuardHome dns.upstream_dns_file"))
-o.default = "/etc/AdGuardHome/adguard_upstream_dns_file.txt"
-o.datatype = "string"
-o.optional = false
-o:depends("upstream_dns_file_enable", "1")
-
-o = s:taboption("other", Button, "upstream_dns_apply", translate("Generate upstream_dns_file"), translate("Download domain lists, generate file, set dns.upstream_dns_file and reload AdGuardHome"))
-o.inputtitle = translate("Generate")
-o:depends("upstream_dns_file_enable", "1")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/upstream_dns2adg.sh >/tmp/AdGuardHome_upstream_dns.log 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-
-o = s:taboption("other", Button, "upstream_dns_del", translate("Delete upstream_dns_file setting"), translate("Clear dns.upstream_dns_file only when it points to the custom file path"))
-o.inputtitle = translate("Del")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/upstream_dns2adg.sh del >/tmp/AdGuardHome_upstream_dns.log 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-
----- GFWList Settings ----
-local a
-if fs.access(configpath) then
-a=luci.sys.call("grep -m 1 -q programadd "..configpath)
-else
-a=1
-end
-if (a==0) then
-a="Added"
-else
-a="Not added"
-end
-
-o=s:taboption("other", Button,"gfwdel",translate("Del gfwlist"),translate(a))
-o.optional = false
-o.inputtitle=translate("Del")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/gfw2adg.sh del 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-o=s:taboption("other", Button,"gfwadd",translate("Add gfwlist"),translate(a))
-o.optional = false
-o.inputtitle=translate("Add")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/gfw2adg.sh 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-if fs.access(configpath) then
-a=luci.sys.call("grep -m 1 -q ipset.txt "..configpath)
-else
-a=1
-end
-if (a==0) then
-a="Added"
-else
-a="Not added"
-end
-o=s:taboption("other", Button,"gfwipsetdel",translate("Del gfwlist").." "..translate("(ipset only)"),translate(a))
-o.optional = false
-o.inputtitle=translate("Del")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/gfwipset2adg.sh del 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-o=s:taboption("other", Button," ",translate("Add gfwlist").." "..translate("(ipset only)"),translate(a).." "..translate("will set to name gfwlist"))
-o.optional = false
-o.inputtitle=translate("Add")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/gfwipset2adg.sh 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-o = s:taboption("other", Value, "gfwupstream", translate("Gfwlist upstream dns server"), translate("Gfwlist domain upstream dns service")..translate(a))
-o.default     = "tcp://208.67.220.220:5353"
-o.datatype    = "string"
-o.optional = false
-
 fs.writefile("/var/run/AdG_log_pos","0")
 
 function m.on_commit(map)
-	local custom_ipset_enable=uci:get("AdGuardHome","AdGuardHome","custom_ipset_enable")
-	if custom_ipset_enable=="1" then
-		luci.sys.call("sh /usr/share/AdGuardHome/custom_ipset2adg.sh noreload >/tmp/AdGuardHome_custom_ipset.log 2>&1")
-	else
-		luci.sys.call("sh /usr/share/AdGuardHome/custom_ipset2adg.sh del noreload >/tmp/AdGuardHome_custom_ipset.log 2>&1")
+	-- Only clean up ipset config when disabled (fast operation, no download)
+	local whitelist_ipset_enable=uci:get("AdGuardHome","AdGuardHome","whitelist_ipset_enable")
+	if whitelist_ipset_enable~="1" then
+		luci.sys.call("sh /usr/share/AdGuardHome/whitelist_ipset2adg.sh del noreload >/tmp/AdGuardHome_whitelist_ipset.log 2>&1")
 	end
+	-- Only clean up upstream dns config when disabled (fast operation, no download)
 	local upstream_dns_file_enable=uci:get("AdGuardHome","AdGuardHome","upstream_dns_file_enable")
-	if upstream_dns_file_enable=="1" then
-		luci.sys.call("sh /usr/share/AdGuardHome/upstream_dns2adg.sh noreload >/tmp/AdGuardHome_upstream_dns.log 2>&1")
-	else
+	if upstream_dns_file_enable~="1" then
 		luci.sys.call("sh /usr/share/AdGuardHome/upstream_dns2adg.sh del noreload >/tmp/AdGuardHome_upstream_dns.log 2>&1")
 	end
 	if (fs.access("/var/run/AdGserverdis")) then

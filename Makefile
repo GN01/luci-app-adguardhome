@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-adguardhome
-PKG_VERSION:=1.1.1
+PKG_VERSION:=1.1.2
 PKG_MAINTAINER:=<https://github.com/sirpdboy/luci-app-adguardhome>
 
 LUCI_TITLE:=LuCI app for AdGuardHome
@@ -31,8 +31,12 @@ exit 0
 endef
 
 define Package/$(PKG_NAME)/postinst
-
 #!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || {
+	rm -f /tmp/luci-indexcache.*
+	rm -rf /tmp/luci-modulecache/
+	/etc/init.d/rpcd reload 2>/dev/null
+}
 	chmod +x /usr/share/AdGuardHome/*
 	chmod +x /etc/init.d/AdGuardHome
 	/etc/init.d/AdGuardHome enable >/dev/null 2>&1
@@ -40,8 +44,6 @@ define Package/$(PKG_NAME)/postinst
 	if [ "$enable" == "1" ]; then
 		/etc/init.d/AdGuardHome reload >/dev/null 2>&1
 	fi
-	rm -f /tmp/luci-indexcache
-	rm -f /tmp/luci-modulecache/*
 exit 0
 endef
 

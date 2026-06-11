@@ -22,7 +22,7 @@ uci_get() {
 	[ -n "$value" ] && printf '%s\n' "$value" || printf '%s\n' "$default"
 }
 
-#=== YAML Helpers (reuse pattern from custom_ipset2adg.sh) ===#
+#=== YAML Helpers (reuse pattern from whitelist_ipset2adg.sh) ===#
 yaml_get_dns_value() {
 	local key="$1"
 	local file="$2"
