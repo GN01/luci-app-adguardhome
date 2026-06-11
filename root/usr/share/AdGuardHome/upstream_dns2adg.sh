@@ -11,9 +11,7 @@ uci_get() {
 		configpath) value="${UPSTREAM_DNS_CONFIG:-}" ;;
 		upstream_dns_cn_upstream) value="${UPSTREAM_DNS_CN:-}" ;;
 		upstream_dns_default_upstreams) value="${UPSTREAM_DNS_DEFAULT:-}" ;;
-		upstream_dns_base_url_github) value="${UPSTREAM_DNS_GITHUB:-}" ;;
-		upstream_dns_base_url_cdn) value="${UPSTREAM_DNS_CDN:-}" ;;
-		upstream_dns_files) value="${UPSTREAM_DNS_FILES:-}" ;;
+		upstream_dns_urls) value="${UPSTREAM_DNS_URLS:-}" ;;
 		upstream_dns_file) value="${UPSTREAM_DNS_FILE:-}" ;;
 	esac
 	if [ -z "$value" ] && command -v uci >/dev/null 2>&1; then
@@ -75,25 +73,19 @@ yaml_set_dns_value() {
 }
 
 #=== Download Helper ===#
-download_file() {
-	local file_name="$1"
-	local url_primary="${BASE_URL_GITHUB}/${file_name}"
-	local url_backup="${BASE_URL_CDN}/${file_name}"
-	local output_file="${WORK_DIR}/${file_name}"
+download_url() {
+	local url="$1"
+	local output_file="$2"
 
-	if command -v wget-ssl >/dev/null 2>&1; then
+	if [ -n "${UPSTREAM_DNS_TEST_WGET:-}" ]; then
+		WGET="$UPSTREAM_DNS_TEST_WGET"
+	elif command -v wget-ssl >/dev/null 2>&1; then
 		WGET="wget-ssl"
 	else
 		WGET="wget"
 	fi
 
-	if $WGET --no-check-certificate -q -T 15 -t 2 "$url_primary" -O "$output_file" 2>/dev/null; then
-		return 0
-	fi
-
-	$WGET --no-check-certificate -q -T 15 -t 2 "$url_backup" -O "$output_file" 2>/dev/null && return 0
-
-	return 1
+	$WGET --no-check-certificate -q -T 15 -t 2 "$url" -O "$output_file" 2>/dev/null
 }
 
 reload_service() {
@@ -110,9 +102,9 @@ reload_arg="$2"
 configpath="$(uci_get configpath "/etc/AdGuardHome.yaml")"
 cn_upstream="$(uci_get upstream_dns_cn_upstream "https://223.5.5.5/dns-query https://1.12.12.12/dns-query")"
 default_upstreams="$(uci_get upstream_dns_default_upstreams "https://dns.cloudflare.com/dns-query https://dns.google/dns-query")"
-BASE_URL_GITHUB="$(uci_get upstream_dns_base_url_github "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release")"
-BASE_URL_CDN="$(uci_get upstream_dns_base_url_cdn "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release")"
-files_list="$(uci_get upstream_dns_files "direct-list.txt apple-cn.txt google-cn.txt")"
+urls_list="$(uci_get upstream_dns_urls "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt
+https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt
+https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/google-cn.txt")"
 output="$(uci_get upstream_dns_file "/etc/AdGuardHome/adguard_upstream_dns_file.txt")"
 
 if [ ! -f "$configpath" ]; then
@@ -148,25 +140,26 @@ echo "" >> "$FINAL_FILE"
 # --- Step B: Download and convert domain lists ---
 TEMP_RULES="${WORK_DIR}/cn_rules.txt"
 : > "$TEMP_RULES"
-files_count=0
+urls_count=0
 success_count=0
 
-for file in $files_list; do
-	files_count=$((files_count + 1))
-	if download_file "$file"; then
+for url in $urls_list; do
+	urls_count=$((urls_count + 1))
+	rules_file="${WORK_DIR}/rules_${urls_count}.txt"
+	if download_url "$url" "$rules_file"; then
 		# Convert: skip regex lines, strip 'full:' prefix, wrap as [/domain/]cn_upstream
-		cat "${WORK_DIR}/${file}" | \
+		cat "$rules_file" | \
 		grep -v "^regexp:" | \
 		sed 's/^full://g' | \
 		sed "s#^#[/#g" | \
 		sed "s#\$#/]${cn_upstream}#g" >> "$TEMP_RULES"
 		success_count=$((success_count + 1))
 	else
-		echo "[ERROR] download failed: $file"
+		echo "[ERROR] download failed: $url"
 	fi
 done
 
-if [ "$success_count" -ne "$files_count" ] || [ ! -s "$TEMP_RULES" ]; then
+if [ "$success_count" -ne "$urls_count" ] || [ ! -s "$TEMP_RULES" ]; then
 	echo "download incomplete or rules empty, aborting"
 	exit 1
 fi

@@ -19,13 +19,16 @@ https://github.com/sirpdboy/luci-app-adguardhome
 
 `upstream_dns_file` 用于生成 AdGuardHome 的 `dns.upstream_dns_file` 配置文件，实现按域名列表进行 DNS 分流。
 
-- 默认下载 Loyalsoldier 的域名列表：`direct-list.txt`、`apple-cn.txt`、`google-cn.txt`
+- 默认下载以下 Loyalsoldier 域名列表链接：
+  `https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt`
+  `https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt`
+  `https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/google-cn.txt`
 - 国内直连域名默认使用：`https://223.5.5.5/dns-query https://1.12.12.12/dns-query`
 - 非国内域名默认使用：`https://dns.cloudflare.com/dns-query https://dns.google/dns-query`
 - 默认生成文件：`/etc/AdGuardHome/adguard_upstream_dns_file.txt`
 - 生成后会写入 AdGuardHome 配置中的 `dns.upstream_dns_file`
 
-可在 LuCI 的 `Upstream DNS` 页面启用、调整下载源和上游 DNS，并点击生成。
+可在 LuCI 的 `Upstream DNS` 页面启用、通过加号添加多个域名列表链接、调整上游 DNS，并点击生成。
 
 ### whitelist_ipset
 

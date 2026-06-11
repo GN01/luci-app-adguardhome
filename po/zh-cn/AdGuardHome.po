@@ -329,23 +329,11 @@ msgstr "默认上游 DNS"
 msgid "Default fallback upstream DNS for non-China domains (space-separated, e.g. https://dns.cloudflare.com/dns-query https://dns.google/dns-query)"
 msgstr "非国内域名的默认回退上游 DNS（空格分隔，如 https://dns.cloudflare.com/dns-query https://dns.google/dns-query）"
 
-msgid "GitHub source URL"
-msgstr "GitHub 下载源"
+msgid "Domain list URLs"
+msgstr "域名列表链接"
 
-msgid "Base URL for downloading domain lists from GitHub"
-msgstr "从 GitHub 下载域名列表的基础 URL"
-
-msgid "CDN source URL"
-msgstr "CDN 下载源"
-
-msgid "Fallback CDN base URL if GitHub download fails"
-msgstr "GitHub 下载失败时的 CDN 回退基础 URL"
-
-msgid "Domain list files"
-msgstr "域名列表文件"
-
-msgid "Space-separated list of domain files to download (e.g. direct-list.txt apple-cn.txt google-cn.txt)"
-msgstr "要下载的域名文件列表（空格分隔，如 direct-list.txt apple-cn.txt google-cn.txt）"
+msgid "Add one domain list URL per item"
+msgstr "每项添加一个域名列表链接"
 
 msgid "Upstream DNS file path"
 msgstr "upstream_dns_file 路径"

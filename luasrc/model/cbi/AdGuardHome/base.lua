@@ -235,20 +235,10 @@ o.datatype = "string"
 o.optional = false
 o:depends("upstream_dns_file_enable", "1")
 
-o = s:taboption("upstream", Value, "upstream_dns_base_url_github", translate("GitHub source URL"), translate("Base URL for downloading domain lists from GitHub"))
-o.default = "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release"
-o.datatype = "string"
-o.optional = false
-o:depends("upstream_dns_file_enable", "1")
-
-o = s:taboption("upstream", Value, "upstream_dns_base_url_cdn", translate("CDN source URL"), translate("Fallback CDN base URL if GitHub download fails"))
-o.default = "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release"
-o.datatype = "string"
-o.optional = false
-o:depends("upstream_dns_file_enable", "1")
-
-o = s:taboption("upstream", Value, "upstream_dns_files", translate("Domain list files"), translate("Space-separated list of domain files to download (e.g. direct-list.txt apple-cn.txt google-cn.txt)"))
-o.default = "direct-list.txt apple-cn.txt google-cn.txt"
+o = s:taboption("upstream", DynamicList, "upstream_dns_urls", translate("Domain list URLs"), translate("Add one domain list URL per item"))
+o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt")
+o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt")
+o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/google-cn.txt")
 o.datatype = "string"
 o.optional = false
 o:depends("upstream_dns_file_enable", "1")
