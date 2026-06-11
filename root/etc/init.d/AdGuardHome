@@ -373,6 +373,7 @@ _add_upprotect_file()
 ensure_ipset_sets()
 {
 	local configpath="$1"
+	local recreate="$2"
 	local setname
 	command -v ipset >/dev/null 2>&1 || return
 	[ -f "$configpath" ] || return
@@ -401,7 +402,12 @@ ensure_ipset_sets()
 		case "$setname" in
 			*[!A-Za-z0-9_.-]*|"") continue ;;
 		esac
-		ipset list "$setname" >/dev/null 2>&1 || ipset create "$setname" hash:ip 2>/dev/null
+		if [ "$recreate" = "1" ]; then
+			ipset destroy "$setname" 2>/dev/null
+			ipset create "$setname" hash:net timeout 86400 2>/dev/null
+		else
+			ipset list "$setname" >/dev/null 2>&1 || ipset create "$setname" hash:net timeout 86400 2>/dev/null
+		fi
 	done
 }
 
@@ -429,8 +435,10 @@ start_service() {
 	config_get_bool whitelist_ipset_enable $config_name whitelist_ipset_enable 0
 	if [ "$whitelist_ipset_enable" = "1" ]; then
 		sh /usr/share/AdGuardHome/whitelist_ipset2adg.sh noreload >/tmp/AdGuardHome_whitelist_ipset.log 2>&1
+		ensure_ipset_sets "$configpath" "1"
+	else
+		ensure_ipset_sets "$configpath"
 	fi
-	ensure_ipset_sets "$configpath"
 	config_get backupfile $config_name backupfile ""
 	mkdir -p $workdir/data
 	if [ -n "$backupfile" ] && [ ! -d "$workdir/data" ]; then
@@ -603,14 +611,6 @@ do_crontab(){
 	crontab_editor
 	[ "$cronenable" == "0" ] && /usr/share/AdGuardHome/addhost.sh "del" "noreload" || /usr/share/AdGuardHome/addhost.sh "" "noreload"
 
-	findstr="/usr/share/AdGuardHome/gfw2adg.sh"
-	default="30 3 * * * /usr/share/AdGuardHome/gfw2adg.sh"
-	[ "$enabled" == "0" ] || [ "${crontab//autogfw/}" == "$crontab" ] && cronenable=0 || cronenable=1
-	crontab_editor
-	findstr="/usr/share/AdGuardHome/gfwipset2adg.sh"
-	default="31 3 * * * /usr/share/AdGuardHome/gfwipset2adg.sh"
-	[ "$enabled" == "0" ] || [ "${crontab//autogfwipset/}" == "$crontab" ] && cronenable=0 || cronenable=1
-	crontab_editor
 	findstr="/usr/share/AdGuardHome/upstream_dns2adg.sh"
 	default="32 3 * * * /usr/share/AdGuardHome/upstream_dns2adg.sh"
 	[ "$enabled" == "0" ] || [ "${crontab//autoupstreamdns/}" == "$crontab" ] && cronenable=0 || cronenable=1

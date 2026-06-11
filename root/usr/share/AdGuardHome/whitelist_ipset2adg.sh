@@ -127,11 +127,13 @@ normalize_domains() {
 ensure_ipset() {
 	local setname="$1"
 	if [ -n "${WHITELIST_IPSET_TEST_IPSET_LOG:-}" ]; then
-		printf 'create %s hash:ip\n' "$setname" >> "$WHITELIST_IPSET_TEST_IPSET_LOG"
+		printf 'destroy %s\n' "$setname" >> "$WHITELIST_IPSET_TEST_IPSET_LOG"
+		printf 'create %s hash:net timeout 86400\n' "$setname" >> "$WHITELIST_IPSET_TEST_IPSET_LOG"
 		return
 	fi
 	if command -v ipset >/dev/null 2>&1; then
-		ipset list "$setname" >/dev/null 2>&1 || ipset create "$setname" hash:ip 2>/dev/null
+		ipset destroy "$setname" 2>/dev/null
+		ipset create "$setname" hash:net timeout 86400 2>/dev/null
 	fi
 }
 
