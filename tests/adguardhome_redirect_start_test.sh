@@ -12,11 +12,27 @@ start_service_body="$(awk '
 
 redirect_line="$(printf "%s\n" "$start_service_body" | grep -n "_do_redirect 1" | head -n 1 | cut -d: -f1 || true)"
 procd_line="$(printf "%s\n" "$start_service_body" | grep -n "procd_open_instance" | head -n 1 | cut -d: -f1 || true)"
+upstream_file_guard_line="$(printf "%s\n" "$start_service_body" | grep -n "ensure_upstream_dns_file_available" | head -n 1 | cut -d: -f1 || true)"
 
 if [ -z "$redirect_line" ] || [ -z "$procd_line" ] || [ "$redirect_line" -gt "$procd_line" ]; then
 	echo "start_service must prepare redirect before starting AdGuardHome"
 	exit 1
 fi
+
+if [ -z "$upstream_file_guard_line" ] || [ "$upstream_file_guard_line" -gt "$procd_line" ]; then
+	echo "start_service must clear missing upstream_dns_file before starting AdGuardHome"
+	exit 1
+fi
+
+grep -q "ensure_upstream_dns_file_available" "$INIT_SCRIPT" || {
+	echo "missing upstream_dns_file guard"
+	exit 1
+}
+
+grep -q 'config_editor "dns.upstream_dns_file" '\''""'\''' "$INIT_SCRIPT" || {
+	echo "missing upstream_dns_file clear operation"
+	exit 1
+}
 
 grep -q "ensure_adguardhome_dns_port_available" "$INIT_SCRIPT" || {
 	echo "redirect/dnsmasq-upstream modes must move AdGuardHome off port 53 before start"

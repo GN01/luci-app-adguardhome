@@ -411,6 +411,23 @@ ensure_ipset_sets()
 	done
 }
 
+ensure_upstream_dns_file_available()
+{
+	local configpath="$1"
+	local upstream_dns_file
+	upstream_dns_file="$(config_editor "dns.upstream_dns_file" "" "$configpath" "1")"
+	upstream_dns_file="${upstream_dns_file#\"}"
+	upstream_dns_file="${upstream_dns_file%\"}"
+	upstream_dns_file="${upstream_dns_file#\'}"
+	upstream_dns_file="${upstream_dns_file%\'}"
+	[ -n "$upstream_dns_file" ] || return
+	[ "$upstream_dns_file" = '""' ] && return
+	[ -f "$upstream_dns_file" ] && return
+
+	config_editor "dns.upstream_dns_file" '""' "$configpath"
+	echo "AdGuardHome dns.upstream_dns_file cleared because file is missing: $upstream_dns_file"
+}
+
 start_service() {
 	# Reading config
 	rm /var/run/AdGserverdis >/dev/null 2>&1
@@ -432,6 +449,7 @@ start_service() {
 	fi
 	#what need to do before reload
 	config_get workdir $config_name workdir "/etc/AdGuardHome"
+	ensure_upstream_dns_file_available "$configpath"
 	config_get_bool whitelist_ipset_enable $config_name whitelist_ipset_enable 0
 	if [ "$whitelist_ipset_enable" = "1" ]; then
 		sh /usr/share/AdGuardHome/whitelist_ipset2adg.sh noreload >/tmp/AdGuardHome_whitelist_ipset.log 2>&1
