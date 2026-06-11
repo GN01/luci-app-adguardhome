@@ -95,6 +95,9 @@ msgstr "使用53端口替换dnsmasq"
 msgid "AdGuardHome redirect mode"
 msgstr "AdGuardHome重定向模式"
 
+msgid "When using dnsmasq upstream or 53 redirect mode, if AdGuardHome DNS port is 53, it will be changed to 1745 automatically."
+msgstr "使用 dnsmasq 上游或 53 重定向模式时，如果 AdGuardHome DNS 端口为 53，将自动改为 1745。"
+
 msgid "Bin Path"
 msgstr "执行文件路径"
 

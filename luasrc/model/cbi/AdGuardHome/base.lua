@@ -61,7 +61,7 @@ o.description = string.format(translate("Current core version:") .. "<strong><fo
 local port=luci.sys.exec("grep -A 5 '^dns:' "..configpath.." | grep 'port:' | awk '{print $2}'  2>nul")
 if (port=="") then port="?" end
 
-o = s:taboption("basic", ListValue, "redirect", port..translate("Redirect"), translate("AdGuardHome redirect mode"))
+o = s:taboption("basic", ListValue, "redirect", port..translate("Redirect"), translate("AdGuardHome redirect mode") .. "<br />" .. translate("When using dnsmasq upstream or 53 redirect mode, if AdGuardHome DNS port is 53, it will be changed to 1745 automatically."))
 o:value("none", translate("none"))
 o:value("dnsmasq-upstream", translate("Run as dnsmasq upstream server"))
 o:value("redirect", translate("Redirect 53 port to AdGuardHome"))

@@ -154,6 +154,17 @@ use_port53()
 	/etc/init.d/dnsmasq restart
 }
 
+ensure_adguardhome_dns_port_available()
+{
+	local safe_port="1745"
+	[ "$redirect" = "redirect" ] || [ "$redirect" = "dnsmasq-upstream" ] || return
+	[ "$AdGuardHome_PORT" = "53" ] || return
+
+	config_editor "dns.port" "$safe_port" "$configpath"
+	AdGuardHome_PORT="$safe_port"
+	echo "AdGuardHome dns.port moved to $safe_port to avoid port 53 conflict with dnsmasq"
+}
+
 do_redirect()
 {
 	config_load "${CONFIGURATION}"
@@ -166,10 +177,10 @@ _do_redirect()
 	enabled=$1
 
 	config_get configpath $CONFIGURATION configpath "/etc/AdGuardHome.yaml"
-	AdGuardHome_PORT=$(config_editor "dns.port" "" "$configpath" "1")
 	if [ ! -s "$configpath" ]; then
 		cp -f /usr/share/AdGuardHome/AdGuardHome_template.yaml $configpath
 	fi
+	AdGuardHome_PORT=$(config_editor "dns.port" "" "$configpath" "1")
 	if [ -z "$AdGuardHome_PORT" ]; then
 		AdGuardHome_PORT="0"
 	fi
@@ -198,6 +209,11 @@ _do_redirect()
 			clear_firewall
 		fi
 	fi
+
+	if [ "$enabled" != "0" ]; then
+		ensure_adguardhome_dns_port_available
+	fi
+
 	uci delete AdGuardHome.@AdGuardHome[0].old_redirect 2>/dev/null
 	uci delete AdGuardHome.@AdGuardHome[0].old_port 2>/dev/null
 	uci delete AdGuardHome.@AdGuardHome[0].old_enabled 2>/dev/null
@@ -475,6 +491,8 @@ start_service() {
 		ADDITIONAL_ARGS="$ADDITIONAL_ARGS -v"
 	fi
 
+	_do_redirect 1
+
 	procd_open_instance
 	SET_TZ="`uci get system.@system[0].timezone 2>/dev/null`"
 	if [ -n "$SET_TZ" ]; then
@@ -486,9 +504,7 @@ start_service() {
 	procd_set_param command $binpath $ADDITIONAL_ARGS
 	procd_set_param file "$configpath" "/etc/hosts" "/etc/config/AdGuardHome"
 	procd_close_instance
-	if [ -f "$configpath" ]; then
-        (sleep 5 && _do_redirect 1) &
-	else
+	if [ ! -f "$configpath" ]; then
 		_do_redirect 0
 		config_get "redirect" $CONFIGURATION "redirect" "none"
 		if [ "$redirect" != "none" ]; then

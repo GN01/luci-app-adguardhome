@@ -1,0 +1,41 @@
+#!/bin/sh
+set -eu
+
+ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+INIT_SCRIPT="$ROOT_DIR/root/etc/init.d/AdGuardHome"
+
+start_service_body="$(awk '
+	/^start_service\(\) \{/ { in_func=1 }
+	in_func { print }
+	in_func && /^}/ { exit }
+' "$INIT_SCRIPT")"
+
+redirect_line="$(printf "%s\n" "$start_service_body" | grep -n "_do_redirect 1" | head -n 1 | cut -d: -f1 || true)"
+procd_line="$(printf "%s\n" "$start_service_body" | grep -n "procd_open_instance" | head -n 1 | cut -d: -f1 || true)"
+
+if [ -z "$redirect_line" ] || [ -z "$procd_line" ] || [ "$redirect_line" -gt "$procd_line" ]; then
+	echo "start_service must prepare redirect before starting AdGuardHome"
+	exit 1
+fi
+
+grep -q "ensure_adguardhome_dns_port_available" "$INIT_SCRIPT" || {
+	echo "redirect/dnsmasq-upstream modes must move AdGuardHome off port 53 before start"
+	exit 1
+}
+
+grep -q 'safe_port="1745"' "$INIT_SCRIPT" || {
+	echo "redirect/dnsmasq-upstream modes must use 1745 as the fixed safe port"
+	exit 1
+}
+
+if grep -q "for safe_port in" "$INIT_SCRIPT"; then
+	echo "redirect/dnsmasq-upstream modes must not choose rotating safe ports"
+	exit 1
+fi
+
+if printf "%s\n" "$start_service_body" | grep -q "sleep 5.*_do_redirect 1"; then
+	echo "start_service must not run delayed redirect after startup"
+	exit 1
+fi
+
+echo "AdGuardHome redirect startup order test passed"
