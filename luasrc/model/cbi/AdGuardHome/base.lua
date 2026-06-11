@@ -105,7 +105,8 @@ return value
 end
 --- upx
 o = s:taboption("core",ListValue, "upxflag", translate("use upx to compress bin after download"))
-o:value("", translate("none"))
+o.default = "off"
+o:value("off", translate("none"))
 o:value("-1", translate("compress faster"))
 o:value("-9", translate("compress better"))
 o:value("--best", translate("compress best(can be slow for big files)"))
@@ -236,9 +237,9 @@ o.optional = false
 o:depends("upstream_dns_file_enable", "1")
 
 o = s:taboption("upstream", DynamicList, "upstream_dns_urls", translate("Domain list URLs"), translate("Add one domain list URL per item"))
-o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt")
-o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt")
-o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/google-cn.txt")
+o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt", "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt")
+o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt", "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt")
+o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/google-cn.txt", "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/google-cn.txt")
 o.datatype = "string"
 o.optional = false
 o:depends("upstream_dns_file_enable", "1")
