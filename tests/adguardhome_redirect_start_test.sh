@@ -64,10 +64,10 @@ if grep -q "CONFIGURATION\\|CRON_FILE\\|GFWSET\\|AdGuardHome_PORT\\|ADDITIONAL_A
 	exit 1
 fi
 
-grep -q 'ipset destroy "$setname"' "$INIT_SCRIPT" || {
-	echo "whitelist ipset should be recreated on startup"
+if grep -q 'ipset destroy "$setname"' "$INIT_SCRIPT"; then
+	echo "existing whitelist ipset should not be destroyed on startup"
 	exit 1
-}
+fi
 
 grep -q 'ipset create "$setname" hash:net timeout 86400' "$INIT_SCRIPT" || {
 	echo "whitelist ipset should use hash:net timeout 86400"

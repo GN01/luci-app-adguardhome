@@ -56,7 +56,10 @@ if grep -q "ipset_file:" "$CONFIG"; then
 	echo "ipset_file should be removed"
 	exit 1
 fi
-grep -q "destroy whitelist" "$IPSET_LOG"
+if grep -q "destroy whitelist" "$IPSET_LOG"; then
+	echo "existing whitelist ipset should not be destroyed"
+	exit 1
+fi
 grep -q "create whitelist hash:net timeout 86400" "$IPSET_LOG"
 
 WHITELIST_IPSET_CONFIG="$CONFIG" \

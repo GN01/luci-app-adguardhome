@@ -373,7 +373,6 @@ _add_upprotect_file()
 ensure_ipset_sets()
 {
 	local configpath="$1"
-	local recreate="$2"
 	local setname
 	command -v ipset >/dev/null 2>&1 || return
 	[ -f "$configpath" ] || return
@@ -402,12 +401,7 @@ ensure_ipset_sets()
 		case "$setname" in
 			*[!A-Za-z0-9_.-]*|"") continue ;;
 		esac
-		if [ "$recreate" = "1" ]; then
-			ipset destroy "$setname" 2>/dev/null
-			ipset create "$setname" hash:net timeout 86400 2>/dev/null
-		else
-			ipset list "$setname" >/dev/null 2>&1 || ipset create "$setname" hash:net timeout 86400 2>/dev/null
-		fi
+		ipset list "$setname" >/dev/null 2>&1 || ipset create "$setname" hash:net timeout 86400 2>/dev/null
 	done
 }
 
@@ -453,10 +447,8 @@ start_service() {
 	config_get_bool whitelist_ipset_enable $config_name whitelist_ipset_enable 0
 	if [ "$whitelist_ipset_enable" = "1" ]; then
 		sh /usr/share/AdGuardHome/whitelist_ipset2adg.sh noreload >/tmp/AdGuardHome_whitelist_ipset.log 2>&1
-		ensure_ipset_sets "$configpath" "1"
-	else
-		ensure_ipset_sets "$configpath"
 	fi
+	ensure_ipset_sets "$configpath"
 	config_get backupfile $config_name backupfile ""
 	mkdir -p $workdir/data
 	if [ -n "$backupfile" ] && [ ! -d "$workdir/data" ]; then
