@@ -40,6 +40,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   OPENWRT_TARGET: ${{ github.event_name == 'workflow_dispatch' && inputs.target || 'x86' }}
   OPENWRT_SUBTARGET: ${{ github.event_name == 'workflow_dispatch' && inputs.subtarget || '64' }}
 
