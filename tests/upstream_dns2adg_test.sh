@@ -74,7 +74,7 @@ UPSTREAM_DNS_FILE="$OUTPUT" \
 UPSTREAM_DNS_CN="https://223.5.5.5/dns-query https://1.12.12.12/dns-query" \
 UPSTREAM_DNS_DEFAULT="https://dns.cloudflare.com/dns-query https://dns.google/dns-query" \
 UPSTREAM_DNS_CUSTOM_RULES="#转发.lan域名到dnsmasq
-#[/.lan/]127.0.0.1:1745
+#[/lan/]127.0.0.1:1745
 [/test.lan/]127.0.0.1:1745" \
 UPSTREAM_DNS_NO_RELOAD="1" \
 UPSTREAM_DNS_TEST_WGET="$WGET" \
@@ -86,7 +86,7 @@ grep -q "https://dns.cloudflare.com/dns-query" "$OUTPUT"
 grep -q "https://dns.google/dns-query" "$OUTPUT"
 grep -q "# === Custom Domain Upstream Rules ===" "$OUTPUT"
 grep -q "#转发.lan域名到dnsmasq" "$OUTPUT"
-grep -q "#\\[/.lan/\\]127.0.0.1:1745" "$OUTPUT"
+grep -q "#\\[/lan/\\]127.0.0.1:1745" "$OUTPUT"
 grep -q "\\[/test.lan/\\]127.0.0.1:1745" "$OUTPUT"
 grep -q "\\[/example.cn/\\]https://223.5.5.5/dns-query https://1.12.12.12/dns-query" "$OUTPUT"
 grep -q "\\[/full.example.cn/\\]https://223.5.5.5/dns-query https://1.12.12.12/dns-query" "$OUTPUT"

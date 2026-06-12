@@ -241,7 +241,7 @@ o.datatype = "string"
 o.optional = false
 o:depends("upstream_dns_file_enable", "1")
 
-local upstream_dns_custom_rules_default = "#转发.lan域名到dnsmasq\n#[/.lan/]127.0.0.1:1745"
+local upstream_dns_custom_rules_default = "#转发.lan域名到dnsmasq\n#[/lan/]127.0.0.1:1745"
 o = s:taboption("upstream", TextValue, "upstream_dns_custom_rules", translate("Custom domain upstream DNS"), translate("Specify upstream servers for particular domains. Lines are written directly to upstream_dns_file."))
 o.rows = 4
 o.wrap = "off"

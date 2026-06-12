@@ -14,7 +14,7 @@ https://github.com/sirpdboy/luci-app-adguardhome
 
 ```text
 #转发.lan域名到dnsmasq
-#[/.lan/]127.0.0.1:1745
+#[/lan/]127.0.0.1:1745
 ```
 
 默认域名列表链接：

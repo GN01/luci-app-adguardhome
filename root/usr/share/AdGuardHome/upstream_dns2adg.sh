@@ -104,7 +104,7 @@ configpath="$(uci_get configpath "/etc/AdGuardHome.yaml")"
 cn_upstream="$(uci_get upstream_dns_cn_upstream "https://223.5.5.5/dns-query https://1.12.12.12/dns-query")"
 default_upstreams="$(uci_get upstream_dns_default_upstreams "https://dns.cloudflare.com/dns-query https://dns.google/dns-query")"
 custom_rules="$(uci_get upstream_dns_custom_rules "#转发.lan域名到dnsmasq
-#[/.lan/]127.0.0.1:1745")"
+#[/lan/]127.0.0.1:1745")"
 urls_list="$(uci_get upstream_dns_urls "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt
 https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt
 https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/google-cn.txt")"

@@ -54,7 +54,7 @@ grep -q 'upstream_dns_custom_rules' "$BASE_LUA" || {
 	exit 1
 }
 
-grep -q '#\[/.lan/\]127.0.0.1:1745' "$BASE_LUA" || {
+grep -q '#\[/lan/\]127.0.0.1:1745' "$BASE_LUA" || {
 	echo "LuCI custom upstream rules should include the .lan dnsmasq example"
 	exit 1
 }
