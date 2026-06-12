@@ -6,6 +6,18 @@ https://github.com/sirpdboy/luci-app-adguardhome
 
 ## 用法
 
+### GitHub Actions 自动构建
+
+仓库内置 `Build and Release` 工作流，会构建并发布两种包：
+
+- `.ipk`：默认使用 OpenWrt `24.10.7` SDK
+- `.apk`：默认使用 OpenWrt `25.12.4` SDK
+
+发布方式：
+
+- 推送 `v*` 标签会自动构建并创建 GitHub Release
+- 也可以在 GitHub Actions 页面手动运行工作流，并按需修改 OpenWrt 版本、target、subtarget 和 Release tag
+
 ### upstream_dns_file
 
 在 LuCI 的 `Upstream DNS` 页面启用后，添加域名列表链接并点击生成，插件会生成 AdGuardHome 的 `dns.upstream_dns_file`。

@@ -1,0 +1,200 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      ipk_openwrt_version:
+        description: "OpenWrt version used to build .ipk packages"
+        required: true
+        default: "24.10.7"
+      apk_openwrt_version:
+        description: "OpenWrt version used to build .apk packages"
+        required: true
+        default: "25.12.4"
+      target:
+        description: "OpenWrt target"
+        required: true
+        default: "x86"
+      subtarget:
+        description: "OpenWrt subtarget"
+        required: true
+        default: "64"
+      tag_name:
+        description: "Release tag name. Empty uses v<PKG_VERSION>-<short_sha>."
+        required: false
+        default: ""
+      create_release:
+        description: "Create or update a GitHub Release"
+        required: true
+        type: boolean
+        default: true
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  OPENWRT_TARGET: ${{ github.event_name == 'workflow_dispatch' && inputs.target || 'x86' }}
+  OPENWRT_SUBTARGET: ${{ github.event_name == 'workflow_dispatch' && inputs.subtarget || '64' }}
+
+jobs:
+  build:
+    name: Build ${{ matrix.format }} on OpenWrt ${{ matrix.openwrt_version }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - format: ipk
+            extension: ipk
+            openwrt_version: ${{ github.event_name == 'workflow_dispatch' && inputs.ipk_openwrt_version || '24.10.7' }}
+          - format: apk
+            extension: apk
+            openwrt_version: ${{ github.event_name == 'workflow_dispatch' && inputs.apk_openwrt_version || '25.12.4' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            clang \
+            flex \
+            bison \
+            gawk \
+            gettext \
+            git \
+            libncurses-dev \
+            libssl-dev \
+            python3 \
+            python3-setuptools \
+            rsync \
+            unzip \
+            zlib1g-dev \
+            file \
+            wget \
+            curl \
+            zstd
+
+      - name: Read package version
+        id: package
+        run: |
+          version="$(awk -F:= '/^PKG_VERSION:=/{ print $2; exit }' Makefile)"
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Download OpenWrt SDK
+        id: sdk
+        run: |
+          set -eu
+          sdk_base="https://downloads.openwrt.org/releases/${{ matrix.openwrt_version }}/targets/${OPENWRT_TARGET}/${OPENWRT_SUBTARGET}"
+          sdk_file="$(curl -fsSL "$sdk_base/" | grep -oE 'openwrt-sdk-[^"]+\.Linux-x86_64\.tar\.zst' | head -n 1)"
+          test -n "$sdk_file"
+
+          curl -fL "$sdk_base/$sdk_file" -o /tmp/openwrt-sdk.tar.zst
+          tar -I zstd -xf /tmp/openwrt-sdk.tar.zst -C /tmp
+
+          sdk_dir="$(find /tmp -maxdepth 1 -type d -name 'openwrt-sdk-*' | head -n 1)"
+          test -d "$sdk_dir"
+          echo "sdk_dir=$sdk_dir" >> "$GITHUB_OUTPUT"
+          echo "sdk_file=$sdk_file" >> "$GITHUB_OUTPUT"
+
+      - name: Copy package into SDK
+        run: |
+          set -eu
+          sdk_dir="${{ steps.sdk.outputs.sdk_dir }}"
+          package_dir="$sdk_dir/package/luci-app-adguardhome"
+          mkdir -p "$package_dir"
+          rsync -a --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.DS_Store' \
+            "$GITHUB_WORKSPACE/" "$package_dir/"
+
+      - name: Build package
+        run: |
+          set -eu
+          sdk_dir="${{ steps.sdk.outputs.sdk_dir }}"
+          cd "$sdk_dir"
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          make defconfig
+          make package/luci-app-adguardhome/compile V=s
+
+      - name: Collect packages
+        run: |
+          set -eu
+          sdk_dir="${{ steps.sdk.outputs.sdk_dir }}"
+          out_dir="$GITHUB_WORKSPACE/dist/${{ matrix.format }}"
+          mkdir -p "$out_dir"
+          find "$sdk_dir/bin/packages" -type f -name "*adguardhome*.${{ matrix.extension }}" -exec cp -v {} "$out_dir/" \;
+          test -n "$(find "$out_dir" -type f -name "*.${{ matrix.extension }}" -print -quit)"
+          sha256sum "$out_dir"/*.${{ matrix.extension }} > "$out_dir/SHA256SUMS-${{ matrix.format }}.txt"
+          ls -lh "$out_dir"
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: adguardhome-${{ matrix.format }}-openwrt-${{ matrix.openwrt_version }}-${{ env.OPENWRT_TARGET }}-${{ env.OPENWRT_SUBTARGET }}
+          path: dist/${{ matrix.format }}/*
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-24.04
+    needs: build
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.create_release)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read package version
+        id: package
+        run: |
+          version="$(awk -F:= '/^PKG_VERSION:=/{ print $2; exit }' Makefile)"
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve release tag
+        id: release
+        env:
+          INPUT_TAG_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || '' }}
+        run: |
+          set -eu
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            tag="${GITHUB_REF_NAME}"
+          elif [ -n "$INPUT_TAG_NAME" ]; then
+            tag="$INPUT_TAG_NAME"
+          else
+            tag="v${{ steps.package.outputs.version }}-${GITHUB_SHA::7}"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Show release assets
+        run: |
+          find release-assets -maxdepth 2 -type f -print -exec ls -lh {} \;
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: luci-app-adguardhome ${{ steps.release.outputs.tag }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: release-assets/*
