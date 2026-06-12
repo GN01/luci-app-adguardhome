@@ -6,12 +6,16 @@ https://github.com/sirpdboy/luci-app-adguardhome
 
 ## 用法
 
+### 分支说明
+
+- `main` 分支：适配 QWRT 18.06 / QWRT 25.12，已测试，QWRT 仍使用 `.ipk` 包格式
+- `imm` 分支：后续用于适配 ImmortalWrt
+
 ### GitHub Actions 自动构建
 
-仓库内置 `Build and Release` 工作流，会构建并发布两种包：
+`main` 分支内置 `Build and Release` 工作流，会构建并发布 `.ipk` 包：
 
 - `.ipk`：默认使用 OpenWrt `24.10.7` SDK
-- `.apk`：默认使用 OpenWrt `25.12.4` SDK
 
 发布方式：
 
