@@ -241,6 +241,25 @@ o.datatype = "string"
 o.optional = false
 o:depends("upstream_dns_file_enable", "1")
 
+local upstream_dns_custom_rules_default = "#转发.lan域名到dnsmasq\n#[/.lan/]127.0.0.1:1745"
+o = s:taboption("upstream", TextValue, "upstream_dns_custom_rules", translate("Custom domain upstream DNS"), translate("Specify upstream servers for particular domains. Lines are written directly to upstream_dns_file."))
+o.rows = 4
+o.wrap = "off"
+o.optional = true
+o.default = upstream_dns_custom_rules_default
+o:depends("upstream_dns_file_enable", "1")
+o.cfgvalue = function(self, section)
+	local value = uci:get("AdGuardHome", section, "upstream_dns_custom_rules")
+	if value and value ~= "" then
+		return value
+	end
+	return upstream_dns_custom_rules_default
+end
+o.write = function(self, section, value)
+	local normalized = value:gsub("\r\n", "\n")
+	uci:set("AdGuardHome", section, "upstream_dns_custom_rules", normalized)
+end
+
 o = s:taboption("upstream", DynamicList, "upstream_dns_urls", translate("Domain list URLs"), translate("Add one domain list URL per item"))
 o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt", "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt")
 o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt", "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt")

@@ -10,6 +10,13 @@ https://github.com/sirpdboy/luci-app-adguardhome
 
 在 LuCI 的 `Upstream DNS` 页面启用后，添加域名列表链接并点击生成，插件会生成 AdGuardHome 的 `dns.upstream_dns_file`。
 
+可在“指定特定域名上游服务器”输入框中添加需要固定上游的域名规则，内容会原样写入 `upstream_dns_file`。默认示例：
+
+```text
+#转发.lan域名到dnsmasq
+#[/.lan/]127.0.0.1:1745
+```
+
 默认域名列表链接：
 
 - `https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt`

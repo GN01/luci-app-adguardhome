@@ -11,6 +11,7 @@ uci_get() {
 		configpath) value="${UPSTREAM_DNS_CONFIG:-}" ;;
 		upstream_dns_cn_upstream) value="${UPSTREAM_DNS_CN:-}" ;;
 		upstream_dns_default_upstreams) value="${UPSTREAM_DNS_DEFAULT:-}" ;;
+		upstream_dns_custom_rules) value="${UPSTREAM_DNS_CUSTOM_RULES:-}" ;;
 		upstream_dns_urls) value="${UPSTREAM_DNS_URLS:-}" ;;
 		upstream_dns_file) value="${UPSTREAM_DNS_FILE:-}" ;;
 	esac
@@ -102,6 +103,8 @@ reload_arg="$2"
 configpath="$(uci_get configpath "/etc/AdGuardHome.yaml")"
 cn_upstream="$(uci_get upstream_dns_cn_upstream "https://223.5.5.5/dns-query https://1.12.12.12/dns-query")"
 default_upstreams="$(uci_get upstream_dns_default_upstreams "https://dns.cloudflare.com/dns-query https://dns.google/dns-query")"
+custom_rules="$(uci_get upstream_dns_custom_rules "#转发.lan域名到dnsmasq
+#[/.lan/]127.0.0.1:1745")"
 urls_list="$(uci_get upstream_dns_urls "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt
 https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt
 https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/google-cn.txt")"
@@ -137,7 +140,12 @@ for dns in $default_upstreams; do
 done
 echo "" >> "$FINAL_FILE"
 
-# --- Step B: Download and convert domain lists ---
+# --- Step B: Write custom domain upstream rules ---
+echo "# === Custom Domain Upstream Rules ===" >> "$FINAL_FILE"
+printf '%s\n' "$custom_rules" >> "$FINAL_FILE"
+echo "" >> "$FINAL_FILE"
+
+# --- Step C: Download and convert domain lists ---
 TEMP_RULES="${WORK_DIR}/cn_rules.txt"
 : > "$TEMP_RULES"
 urls_count=0
@@ -164,7 +172,7 @@ if [ "$success_count" -ne "$urls_count" ] || [ ! -s "$TEMP_RULES" ]; then
 	exit 1
 fi
 
-# --- Step C: Merge into final file ---
+# --- Step D: Merge into final file ---
 echo "# === China Direct Rules (AliDNS) ===" >> "$FINAL_FILE"
 cat "$TEMP_RULES" >> "$FINAL_FILE"
 

@@ -5,8 +5,19 @@ ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 BASE_LUA="$ROOT_DIR/luasrc/model/cbi/AdGuardHome/base.lua"
 MANUAL_LUA="$ROOT_DIR/luasrc/model/cbi/AdGuardHome/manual.lua"
 DEFAULT_CONFIG="$ROOT_DIR/root/etc/config/AdGuardHome"
+MAKEFILE="$ROOT_DIR/Makefile"
 ZH_CN="$ROOT_DIR/po/zh-cn/AdGuardHome.po"
 ZH_HANS="$ROOT_DIR/po/zh_Hans/AdGuardHome.po"
+
+grep -q "PKG_VERSION:=1.0.2" "$MAKEFILE" || {
+	echo "PKG_VERSION should be 1.0.2"
+	exit 1
+}
+
+grep -q "LUCI_VERSION:=1.0.2" "$MAKEFILE" || {
+	echo "LUCI_VERSION should be 1.0.2"
+	exit 1
+}
 
 grep -q "option upxflag 'off'" "$DEFAULT_CONFIG" || {
 	echo "upxflag should default to off"
@@ -35,6 +46,16 @@ fi
 
 grep -q 'fs.readfile("/etc/ssrplus/white.list")' "$BASE_LUA" || {
 	echo "LuCI whitelist domains should default to /etc/ssrplus/white.list when no plugin value is saved"
+	exit 1
+}
+
+grep -q 'upstream_dns_custom_rules' "$BASE_LUA" || {
+	echo "LuCI should expose custom domain upstream DNS rules"
+	exit 1
+}
+
+grep -q '#\[/.lan/\]127.0.0.1:1745' "$BASE_LUA" || {
+	echo "LuCI custom upstream rules should include the .lan dnsmasq example"
 	exit 1
 }
 

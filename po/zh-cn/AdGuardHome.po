@@ -332,6 +332,12 @@ msgstr "默认上游 DNS"
 msgid "Default fallback upstream DNS for non-China domains (space-separated, e.g. https://dns.cloudflare.com/dns-query https://dns.google/dns-query)"
 msgstr "非国内域名的默认回退上游 DNS（空格分隔，如 https://dns.cloudflare.com/dns-query https://dns.google/dns-query）"
 
+msgid "Custom domain upstream DNS"
+msgstr "指定特定域名上游服务器"
+
+msgid "Specify upstream servers for particular domains. Lines are written directly to upstream_dns_file."
+msgstr "指定特定域名使用的上游服务器。每行会直接写入 upstream_dns_file。"
+
 msgid "Domain list URLs"
 msgstr "域名列表链接"
 
