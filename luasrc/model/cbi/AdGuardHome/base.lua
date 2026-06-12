@@ -219,7 +219,7 @@ o.cfgvalue = function(self, section)
 end
 o.write = function(self, section, value)
 	local normalized = value:gsub("\r\n", "\n")
-	uci:set("AdGuardHome", section, "whitelist_ipset_domains", normalized)
+	self.map:set(section, "whitelist_ipset_domains", normalized)
 end
 
 ---- Upstream DNS Settings ----
@@ -257,7 +257,7 @@ o.cfgvalue = function(self, section)
 end
 o.write = function(self, section, value)
 	local normalized = value:gsub("\r\n", "\n")
-	uci:set("AdGuardHome", section, "upstream_dns_custom_rules", normalized)
+	self.map:set(section, "upstream_dns_custom_rules", normalized)
 end
 
 o = s:taboption("upstream", DynamicList, "upstream_dns_urls", translate("Domain list URLs"), translate("Add one domain list URL per item"))

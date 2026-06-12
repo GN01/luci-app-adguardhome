@@ -44,6 +44,16 @@ if grep -q 'uci:set("AdGuardHome", section, "whitelist_ipset_domains", value:gsu
 	exit 1
 fi
 
+if grep -q 'uci:set("AdGuardHome", section, "whitelist_ipset_domains"' "$BASE_LUA"; then
+	echo "Whitelist TextValue should write through the CBI map cursor"
+	exit 1
+fi
+
+if grep -q 'uci:set("AdGuardHome", section, "upstream_dns_custom_rules"' "$BASE_LUA"; then
+	echo "Custom upstream TextValue should write through the CBI map cursor"
+	exit 1
+fi
+
 grep -q 'fs.readfile("/etc/ssrplus/white.list")' "$BASE_LUA" || {
 	echo "LuCI whitelist domains should default to /etc/ssrplus/white.list when no plugin value is saved"
 	exit 1
