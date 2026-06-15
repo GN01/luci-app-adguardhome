@@ -7,6 +7,10 @@ on:
         description: "OpenWrt version used to build .ipk packages"
         required: true
         default: "24.10.7"
+      apk_openwrt_version:
+        description: "OpenWrt version used to build .apk packages"
+        required: true
+        default: "25.12.4"
       target:
         description: "OpenWrt target"
         required: true
@@ -51,6 +55,9 @@ jobs:
           - format: ipk
             extension: ipk
             openwrt_version: ${{ github.event_name == 'workflow_dispatch' && inputs.ipk_openwrt_version || '24.10.7' }}
+          - format: apk
+            extension: apk
+            openwrt_version: ${{ github.event_name == 'workflow_dispatch' && inputs.apk_openwrt_version || '25.12.4' }}
 
     steps:
       - name: Checkout
