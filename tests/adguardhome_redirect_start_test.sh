@@ -79,4 +79,9 @@ if grep -Eq '(^|&&|\|\|)[[:space:]]*/usr/share/AdGuardHome/addhost\.sh|[*][[:spa
 	exit 1
 fi
 
+if grep -q 'split(yaml,part,"\\.")' "$INIT_SCRIPT"; then
+	echo "config_editor should not use awk string escape sequence \\."
+	exit 1
+fi
+
 echo "AdGuardHome redirect startup order test passed"
