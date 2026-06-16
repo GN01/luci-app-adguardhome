@@ -45,6 +45,10 @@ url=""
 output=""
 while [ "$#" -gt 0 ]; do
 	case "$1" in
+		--no-check-certificate|-T|-t)
+			echo "unsupported wget option: $1" >&2
+			exit 2
+			;;
 		-O)
 			shift
 			output="$1"

@@ -77,16 +77,21 @@ yaml_set_dns_value() {
 download_url() {
 	local url="$1"
 	local output_file="$2"
+	local cmd
 
 	if [ -n "${UPSTREAM_DNS_TEST_WGET:-}" ]; then
-		WGET="$UPSTREAM_DNS_TEST_WGET"
-	elif command -v wget-ssl >/dev/null 2>&1; then
-		WGET="wget-ssl"
-	else
-		WGET="wget"
+		"$UPSTREAM_DNS_TEST_WGET" -q "$url" -O "$output_file" 2>/dev/null && return 0
+		return 1
 	fi
 
-	$WGET --no-check-certificate -q -T 15 -t 2 "$url" -O "$output_file" 2>/dev/null
+	for cmd in wget wget-ssl; do
+		command -v "$cmd" >/dev/null 2>&1 || continue
+		"$cmd" -q "$url" -O "$output_file" 2>/dev/null && return 0
+	done
+	if command -v curl >/dev/null 2>&1; then
+		curl -fsSL "$url" -o "$output_file" 2>/dev/null && return 0
+	fi
+	return 1
 }
 
 reload_service() {

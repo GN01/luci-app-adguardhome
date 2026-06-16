@@ -74,4 +74,9 @@ grep -q 'ipset create "$setname" hash:net timeout 86400' "$INIT_SCRIPT" || {
 	exit 1
 }
 
+if grep -Eq '(^|&&|\|\|)[[:space:]]*/usr/share/AdGuardHome/addhost\.sh|[*][[:space:]][*][[:space:]][*][[:space:]][*][[:space:]][*][[:space:]]/usr/share/AdGuardHome/addhost\.sh' "$INIT_SCRIPT"; then
+	echo "addhost.sh should be invoked through sh for apk install compatibility"
+	exit 1
+fi
+
 echo "AdGuardHome redirect startup order test passed"

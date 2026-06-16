@@ -615,10 +615,10 @@ do_crontab(){
 	#[ -n "$logfile" ] && [ "$lastlogfile" != "$logfile" ] && uci set AdGuardHome.AdGuardHome.lastlogfile="$logfile" && commit=1
 
 	findstr="/usr/share/AdGuardHome/addhost.sh"
-	default="0 * * * * /usr/share/AdGuardHome/addhost.sh"
+	default="0 * * * * sh /usr/share/AdGuardHome/addhost.sh"
 	[ "$enabled" == "0" ] || [ "${crontab//autohost/}" == "$crontab" ] && cronenable=0 || cronenable=1
 	crontab_editor
-	[ "$cronenable" == "0" ] && /usr/share/AdGuardHome/addhost.sh "del" "noreload" || /usr/share/AdGuardHome/addhost.sh "" "noreload"
+	[ "$cronenable" == "0" ] && sh /usr/share/AdGuardHome/addhost.sh "del" "noreload" || sh /usr/share/AdGuardHome/addhost.sh "" "noreload"
 
 	findstr="/usr/share/AdGuardHome/upstream_dns2adg.sh"
 	default="32 3 * * * /usr/share/AdGuardHome/upstream_dns2adg.sh"
