@@ -51,7 +51,7 @@ https://github.com/sirpdboy/luci-app-adguardhome
 
 在 LuCI 的 `IPSet Settings` 页面启用后，填写需要不走代理的域名列表并保存，插件会直接写入 AdGuardHome 的 `dns.ipset`。
 
-该功能针对 QWRT + SSR Plus 的 `whitelist` ipset 场景设计。在 ImmortalWrt 等使用 nft set 的场景中未做适配，请勿使用。
+该功能针对 QWRT + SSR Plus 的 `whitelist` ipset 场景设计。截止到 2026-05-15，AdGuardHome 官方 `dns.ipset` 功能并未支持 nftset，因此在 ImmortalWrt 等 nft set 防火墙场景中请勿使用。
 
 - 默认 ipset 名称：`whitelist`
 - 默认域名列表：如果本插件未保存域名，且 `/etc/ssrplus/white.list` 存在，则使用该文件内容

@@ -184,7 +184,7 @@ o.optional = true
 ---- IPSet Settings ----
 s:tab("ipset", translate("IPSet Settings"))
 
-o = s:taboption("ipset", Flag, "whitelist_ipset_enable", translate("Enable whitelist ipset"), translate("Like ssrplus bypass proxy domains: add DNS results to the whitelist ipset through AdGuardHome dns.ipset. The whitelist ipset has the highest proxy priority."))
+o = s:taboption("ipset", Flag, "whitelist_ipset_enable", translate("Enable whitelist ipset"), translate("Like ssrplus bypass proxy domains: add DNS results to the whitelist ipset through AdGuardHome dns.ipset. The whitelist ipset has the highest proxy priority. AdGuardHome does not support nftset yet."))
 o.default = 0
 o.optional = true
 

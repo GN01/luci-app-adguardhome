@@ -298,8 +298,8 @@ msgstr "DNS 分流"
 msgid "Enable whitelist ipset"
 msgstr "启用 whitelist ipset"
 
-msgid "Like ssrplus bypass proxy domains: add DNS results to the whitelist ipset through AdGuardHome dns.ipset. The whitelist ipset has the highest proxy priority."
-msgstr "功能和 ssrplus 的“不走代理的域名”一样：通过 AdGuardHome dns.ipset 将解析结果添加到名为 whitelist 的 ipset 中，whitelist 是代理的最高优先级。"
+msgid "Like ssrplus bypass proxy domains: add DNS results to the whitelist ipset through AdGuardHome dns.ipset. The whitelist ipset has the highest proxy priority. AdGuardHome does not support nftset yet."
+msgstr "功能和 ssrplus 的“不走代理的域名”一样：通过 AdGuardHome dns.ipset 将解析结果添加到名为 whitelist 的 ipset 中，whitelist 是代理的最高优先级。AdGuardHome 目前并未支持 nftset。"
 
 msgid "Whitelist ipset name"
 msgstr "Whitelist ipset 名称"
