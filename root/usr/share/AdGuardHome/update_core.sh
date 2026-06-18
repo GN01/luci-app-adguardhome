@@ -88,7 +88,7 @@ UPX_Compress(){
 	else
 		echo -e "\n${upx_name} 下载成功!\n" 
 	fi
-	which xz > /dev/null 2>&1 || (opkg list | grep ^xz || opkg update > /dev/null 2>&1 && opkg install xz --force-depends) || (echo "软件包 xz 安装失败!" && EXIT 1)
+	Ensure_XZ
 	mkdir -p /tmp/upx-${upx_latest_ver}-${Arch_upx}_linux
 	echo -e "正在解压 ${upx_name} ...\n" 
 	xz -d -c /tmp/upx-${upx_latest_ver}-${Arch_upx}_linux.tar.xz | tar -x -C "/tmp"
@@ -152,38 +152,60 @@ Update_Core(){
 	echo -e "\nAdGuardHome 核心更新成功!" 
 }
 
+Get_Package_Arch() {
+	local pkg_arch=""
+	if command -v opkg >/dev/null 2>&1; then
+		pkg_arch="$(opkg info kernel 2>/dev/null | awk -F "[ _]" '/Architecture/{print($2); exit}')"
+	fi
+	if [ -z "$pkg_arch" ] && command -v apk >/dev/null 2>&1; then
+		pkg_arch="$(apk --print-arch 2>/dev/null || apk print-arch 2>/dev/null)"
+	fi
+	if [ -z "$pkg_arch" ]; then
+		pkg_arch="$(uname -m 2>/dev/null)"
+	fi
+	echo "$pkg_arch"
+}
+
+Ensure_XZ() {
+	command -v xz >/dev/null 2>&1 && return
+	if command -v opkg >/dev/null 2>&1; then
+		(opkg list | grep ^xz || opkg update >/dev/null 2>&1 && opkg install xz --force-depends) && return
+	elif command -v apk >/dev/null 2>&1; then
+		apk add xz >/dev/null 2>&1 && return
+	fi
+	echo "软件包 xz 安装失败!"
+	EXIT 1
+}
+
 GET_Arch() {
-	Archt="$(opkg info kernel | grep Architecture | awk -F "[ _]" '{print($2)}')"
+	Archt="$(Get_Package_Arch)"
 	case "${Archt}" in
-	"i386")
+	"i386"|"i686")
 		Arch="386"
 		;;
-	"i686")
-		Arch="386"
-		;;
-	"x86")
+	"x86_64"|"amd64"|"x86")
 		Arch="amd64"
 		;;
-	"mipsel")
+	"mipsel"|"mipsel_"*|"mipsel-"*)
 		Arch="mipsle"
 	;;
-	"mips64el")
+	"mips64el"|"mips64el_"*|"mips64el-"*)
 		Arch="mips64le"
 		Arch="mipsle"
 		echo -e "mips64el use $Arch may have bug"
 	;;
-	"mips")
+	"mips"|"mips_"*|"mips-"*)
 		Arch="mips"
 	;;
-	"mips64")
+	"mips64"|"mips64_"*|"mips64-"*)
 		Arch="mips64"
 		Arch="mips"
 		echo -e "mips64 use $Arch may have bug"
 	;;
-	"arm")
+	"arm"|"arm_"*|"arm-"*)
 		Arch="arm"
 		;;
-	"aarch64")
+	"aarch64"|"aarch64_"*|"aarch64-"*|"arm64")
 		Arch="arm64"
 		;;
 	"powerpc")
@@ -218,6 +240,6 @@ main(){
 
 trap "EXIT 1" SIGTERM SIGINT
 touch /var/run/update_core
-rm - rf /var/run/update_core_error 2>/dev/null
+rm -rf /var/run/update_core_error 2>/dev/null
 
 main
