@@ -1,6 +1,7 @@
 #!/bin/sh
 
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+default_update_url='https://github.com/AdguardTeam/AdGuardHome/releases/download/${Cloud_Version}/AdGuardHome_linux_${Arch}.tar.gz'
 update_mode=$1
 binpath=$(uci get AdGuardHome.AdGuardHome.binpath)
 if [ -z "$binpath" ]; then
@@ -100,11 +101,21 @@ Update_Core(){
 	mkdir -p "/tmp/AdGuardHome_Update"
 	
 	Arch=$(GET_Arch )
-	eval link=$(uci get AdGuardHome.AdGuardHome.update_url 2>/dev/null)
+	update_url="$(uci get AdGuardHome.AdGuardHome.update_url 2>/dev/null)"
+	[ -z "$update_url" ] && update_url="$default_update_url"
+	link="${update_url//\$\{Cloud_Version\}/$Cloud_Version}"
+	link="${link//\$\{Arch\}/$Arch}"
+	link="${link//\$Cloud_Version/$Cloud_Version}"
+	link="${link//\$Arch/$Arch}"
+	if [ -z "$link" ]; then
+		echo -e "\nAdGuardHome 核心下载链接为空, 请检查 update_url 配置 ..."
+		rm -r /tmp/AdGuardHome_Update
+		EXIT 1
+	fi
 	echo -e "下载链接:${link}"
 	echo -e "文件名称:${link##*/}"
 	echo -e "\n开始下载 AdGuardHome 核心文件 ...\n" 
-	$Downloader /tmp/AdGuardHome_Update/${link##*/} ${link}
+	$Downloader "/tmp/AdGuardHome_Update/${link##*/}" "$link"
 	if [[ $? != 0 ]];then
 		echo -e "\nAdGuardHome 核心下载失败 ..."
 		rm -r /tmp/AdGuardHome_Update

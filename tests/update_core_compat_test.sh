@@ -24,4 +24,14 @@ grep -q 'rm -rf /var/run/update_core_error' "$SCRIPT" || {
 	exit 1
 }
 
+grep -q "default_update_url='https://github.com/AdguardTeam/AdGuardHome/releases/download" "$SCRIPT" || {
+	echo "update_core should have a built-in update_url fallback"
+	exit 1
+}
+
+if grep -q 'eval link=' "$SCRIPT"; then
+	echo "update_core should not use eval to build the download URL"
+	exit 1
+fi
+
 echo "update_core compatibility test passed"
